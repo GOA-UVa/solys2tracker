@@ -1,0 +1,7 @@
+#section_title {
+    font-size: 15px;
+    font-weight: bold;
+}
+#table_title {
+    font-weight: bold;
+}
