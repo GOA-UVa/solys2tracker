@@ -64,27 +64,37 @@ class ConfigurationWidget(QtWidgets.QWidget):
     
     Attributes
     ----------
-    conn_status
-    solys2_w
-    v_spacers
-    h_spacers
-    title
-    layout
-    content_layout
-    input_layout
-    lay_ip
-    ip_label
-    ip_input
-    lay_port
-    port_label
-    port_input
-    lay_pass
-    pass_label
-    pass_input
-    message_l
-    connect_but
+    conn_status : ConnectionStatus
+        Current status of the GUI connection with the Solys2.
+    solys2_w : ISolys2Widget
+        Main parent widget that contains the main functionality and other widgets.
+    v_spacers : list of QSpacerItem
+    h_spacers : list of QSpacerItem
+    title : QLabel
+    layout : QBoxLayout
+    content_layout : QBoxLayout
+    input_layout : QBoxLayout
+    lay_ip : QBoxLayout
+    ip_label : QLabel
+    ip_input : QLineEdit
+    lay_port : QBoxLayout
+    port_label : QLabel
+    port_input : QSpinBox
+    lay_pass : QBoxLayout
+    pass_label : QLabel
+    pass_input : QLineEdit
+    message_l : QLabel
+    connect_but : QPushButton
     """
     def __init__(self, conn_status: ConnectionStatus, solys2_w : ifaces.ISolys2Widget):
+        """
+        Parameters
+        ----------
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
+        solys2_w : ISolys2Widget
+            Main parent widget that contains the main functionality and other widgets.
+        """
         super().__init__()
         self.conn_status = conn_status
         self.solys2_w = solys2_w
@@ -229,3 +239,8 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.conn_status.is_connected = is_connected
         self.solys2_w.connection_changed()
         self.connect_but.setEnabled(True)
+
+class SunTabWidget(QtWidgets.QWidget):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget):
+        super().__init__()
+        self.solys2_w = solys2_w

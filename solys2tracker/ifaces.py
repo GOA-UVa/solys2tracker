@@ -32,3 +32,15 @@ class ISolys2Widget(ABC):
     @abstractmethod
     def connection_changed(self) -> None:
         pass
+
+    @abstractmethod
+    def change_tab_sun(self) -> None:
+        pass
+
+    @abstractmethod
+    def change_tab_moon(self) -> None:
+        pass
+
+    @abstractmethod
+    def change_tab_conf(self) -> None:
+        pass

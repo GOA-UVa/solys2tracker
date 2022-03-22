@@ -5,6 +5,7 @@ This module starts the Solys2Tracker GUI when executed.
 """
 
 """___Built-In Modules___"""
+from enum import Enum
 from typing import Union
 from pathlib import Path
 import sys
@@ -18,28 +19,43 @@ try:
     from . import constants
     from . import ifaces
     from . import noconflict
-    from .tabs import ConfigurationWidget
+    from .tabs import ConfigurationWidget, SunTabWidget
     from .s2ttypes import ConnectionStatus
 except:
     import constants
     import ifaces
     import noconflict
-    from tabs import ConfigurationWidget
+    from tabs import ConfigurationWidget, SunTabWidget
     from s2ttypes import ConnectionStatus
 
 class NavBarWidget(QtWidgets.QWidget):
-    def __init__(self, conn_status: ConnectionStatus):
+    """
+    Navigaton bar that allows the user to change between tabs.
+    """
+    def __init__(self, conn_status: ConnectionStatus, solys2_w : ifaces.ISolys2Widget):
+        """
+        Parameters
+        ----------
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
+        solys2_w : ISolys2Widget
+            Main parent widget that contains the main functionality and other widgets.
+        """
         self.conn_status = conn_status
+        self.solys2_w = solys2_w
         self._build_layout()
 
     def _build_layout(self):
         super().__init__()
         self.sun_but = QtWidgets.QPushButton("SUN")
         self.sun_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.sun_but.clicked.connect(self.press_sun)
         self.moon_but = QtWidgets.QPushButton("MOO")
         self.moon_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.moon_but.clicked.connect(self.press_moon)
         self.conf_but = QtWidgets.QPushButton("CON")
         self.conf_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.conf_but.clicked.connect(self.press_conf)
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.sun_but, 1)
         self.layout.addWidget(self.moon_but, 1)
@@ -51,6 +67,18 @@ class NavBarWidget(QtWidgets.QWidget):
         self.sun_but.setEnabled(enabled)
         self.moon_but.setEnabled(enabled)
         self.conf_but.setEnabled(enabled)
+    
+    @QtCore.Slot()
+    def press_sun(self):
+        self.solys2_w.change_tab_sun()
+
+    @QtCore.Slot()
+    def press_moon(self):
+        self.solys2_w.change_tab_moon()
+
+    @QtCore.Slot()
+    def press_conf(self):
+        self.solys2_w.change_tab_conf()
 
 class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict.makecls()):
     """Main widget that will contain the main functionality and other widgets.
@@ -82,12 +110,12 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         self._build_layout()
     
     def _build_layout(self):
-        self.navbar_w = NavBarWidget(self.conn_status)
-        self.content_w: Union[ConfigurationWidget, ConfigurationWidget] = \
+        self.navbar_w = NavBarWidget(self.conn_status, self)
+        self.content_w: Union[ConfigurationWidget, SunTabWidget] = \
             ConfigurationWidget(self.conn_status, self)
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.navbar_w)
-        self.layout.addWidget(self.content_w)
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.addWidget(self.navbar_w)
+        self.main_layout.addWidget(self.content_w)
     
     def connection_changed(self):
         """
@@ -95,6 +123,41 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         It will update the navigation bar and the GUI.
         """
         self.navbar_w.update_button_enabling()
+
+    class TabEnum(Enum):
+        SUN = 0
+        MOON = 1
+        CONF = 2
+
+    def _change_tab(self, tab: TabEnum):
+        self.main_layout.removeWidget(self.content_w)
+        self.content_w.deleteLater()
+        if tab == Solys2Widget.TabEnum.SUN:
+            self.content_w = SunTabWidget(self)
+        #elif tab == Solys2Widget.TabEnum.MOON:
+            #self.content_w = MoonTabWidget(self)
+        else:
+            self.content_w = ConfigurationWidget(self.conn_status, self)
+        self.main_layout.addWidget(self.content_w)
+
+    def change_tab_sun(self):
+        """
+        Change the tab to the SUN tab.
+        """
+        self._change_tab(Solys2Widget.TabEnum.SUN)
+
+    def change_tab_moon(self):
+        """
+        Change the tab to the MOON tab.
+        """
+        self._change_tab(Solys2Widget.TabEnum.MOON)
+
+    def change_tab_conf(self):
+        """
+        Change the tab to the CONFIGURATION tab.
+        """
+        self._change_tab(Solys2Widget.TabEnum.CONF)
+        
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main window that will contain the main widget."""
