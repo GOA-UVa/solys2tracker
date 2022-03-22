@@ -1,9 +1,12 @@
 """
-This module contains
+This module contains the main tabs that will be present in the application.
+
+It exports the following classes:
+    * ConfigurationWidget: The Configuration Tab.
 """
 
 """___Built-In Modules___"""
-# import here
+from typing import Tuple
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -13,68 +16,216 @@ from solys2 import solys2 as s2
 try:
     from .s2ttypes import ConnectionStatus
     from . import constants
+    from . import ifaces
+    from .common import add_spacer
 except:
     import constants
+    import ifaces
     from s2ttypes import ConnectionStatus
+    from common import add_spacer
 
-def _try_conn(ip: str, port: int, password: str) -> bool:
+"""___Authorship___"""
+__author__ = 'Javier Gatón Herguedas'
+__created__ = "2022/03/18"
+__maintainer__ = "Javier Gatón Herguedas"
+__email__ = "gaton@goa.uva.es"
+__status__ = "Development"
+
+def _try_conn(ip: str, port: int, password: str) -> Tuple[bool, str]:
+    """
+    Tries to connect to the Solys2 through the given IP and Port using the given password.
+
+    Parameters
+    ----------
+    ip : str
+        IP where the Solys2 should be.
+    port : int
+        Solys2 port at which the connection will be done.
+    password : str
+        Password used for connecting to the Solys2.
+
+    Returns
+    -------
+    is_connected : bool
+        Flag that indicates if the connection was successful. True if it was.
+    msg : str
+        Error message in case it wasn't successful, success message in case it was.
+    """
     try:
-        _ = s2.Solys2(ip, port, password)
-    except:
-        return False
-    return True
+        solys = s2.Solys2(ip, port, password)
+        solys.close()
+    except Exception as e:
+        return False, str(e)
+    return True, constants.MSG_CONNECTED_SUCCESSFULLY
 
 class ConfigurationWidget(QtWidgets.QWidget):
-    def __init__(self, conn_status: ConnectionStatus):
+    """
+    The configuration tab.
+    
+    Attributes
+    ----------
+    conn_status
+    solys2_w
+    v_spacers
+    h_spacers
+    title
+    layout
+    content_layout
+    input_layout
+    lay_ip
+    ip_label
+    ip_input
+    lay_port
+    port_label
+    port_input
+    lay_pass
+    pass_label
+    pass_input
+    message_l
+    connect_but
+    """
+    def __init__(self, conn_status: ConnectionStatus, solys2_w : ifaces.ISolys2Widget):
         super().__init__()
         self.conn_status = conn_status
+        self.solys2_w = solys2_w
         self._build_layout()
     
     def _build_layout(self):
-        self.ip_label = QtWidgets.QLabel("IP:")
-        self.port_label = QtWidgets.QLabel("Port:")
-        self.pass_label = QtWidgets.QLabel("Password:")
-
-        self.ip_input = QtWidgets.QLineEdit(self.conn_status.ip)
-        self.port_input = QtWidgets.QSpinBox()
-        self.port_input.setMaximum(100000)
-        self.port_input.setValue(self.conn_status.port)
-        self.pass_input = QtWidgets.QLineEdit(self.conn_status.password)
-
-        self.lay_labels = QtWidgets.QVBoxLayout()
-        self.lay_labels.addWidget(self.ip_label)
-        self.lay_labels.addWidget(self.port_label)
-        self.lay_labels.addWidget(self.pass_label)
-        self.lay_inputs = QtWidgets.QVBoxLayout()
-        self.lay_inputs.addWidget(self.ip_input)
-        self.lay_inputs.addWidget(self.port_input)
-        self.lay_inputs.addWidget(self.pass_input)
-
-        self.connect_but = QtWidgets.QPushButton("Connect")
-        self.connect_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-
-        self.content_layout = QtWidgets.QVBoxLayout()
-        self.input_layout = QtWidgets.QHBoxLayout()
-        self.input_layout.addLayout(self.lay_labels, 1)
-        self.input_layout.addLayout(self.lay_inputs, 1)
-        self.content_layout.addLayout(self.input_layout, 1)
-        self.content_layout.addWidget(self.connect_but, 1)
-
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.v_spacers = []
+        self.h_spacers = []
+        # Title
         self.title = QtWidgets.QLabel("Configuration", alignment=QtCore.Qt.AlignCenter)
         self.title.setObjectName("section_title")
-        self.layout = QtWidgets.QVBoxLayout(self)
+        add_spacer(self.layout, self.v_spacers)
         self.layout.addWidget(self.title)
+        # Content
+        self.content_layout = QtWidgets.QVBoxLayout()
+        # Input
+        self.input_layout = QtWidgets.QVBoxLayout()
+        # First row (IP)
+        self.lay_ip = QtWidgets.QHBoxLayout()
+        self.ip_label = QtWidgets.QLabel("IP:", alignment=QtCore.Qt.AlignCenter)
+        self.ip_input = QtWidgets.QLineEdit(self.conn_status.ip)
+        add_spacer(self.lay_ip, self.h_spacers)
+        self.lay_ip.addWidget(self.ip_label)
+        add_spacer(self.lay_ip, self.h_spacers)
+        self.lay_ip.addWidget(self.ip_input)
+        add_spacer(self.lay_ip, self.h_spacers)
+        # Second row (Port)
+        self.lay_port = QtWidgets.QHBoxLayout()
+        self.port_label = QtWidgets.QLabel("Port:", alignment=QtCore.Qt.AlignCenter)
+        self.port_input = QtWidgets.QSpinBox()
+        self.port_input.setMaximum(1000000)
+        self.port_input.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+            self.port_input.sizePolicy().verticalPolicy()))
+        self.port_input.setValue(self.conn_status.port)
+        add_spacer(self.lay_port, self.h_spacers)
+        self.lay_port.addWidget(self.port_label)
+        add_spacer(self.lay_port, self.h_spacers)
+        self.lay_port.addWidget(self.port_input)
+        add_spacer(self.lay_port, self.h_spacers)
+        # Third row (Password)
+        self.lay_pass = QtWidgets.QHBoxLayout()
+        self.pass_label = QtWidgets.QLabel("Password:", alignment=QtCore.Qt.AlignCenter)
+        self.pass_input = QtWidgets.QLineEdit(self.conn_status.password)
+        add_spacer(self.lay_pass, self.h_spacers)
+        self.lay_pass.addWidget(self.pass_label)
+        add_spacer(self.lay_pass, self.h_spacers)
+        self.lay_pass.addWidget(self.pass_input)
+        add_spacer(self.lay_pass, self.h_spacers)
+        # Finish input
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_ip)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_port)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_pass)
+        add_spacer(self.input_layout, self.v_spacers)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        # Connect button
+        connect_msg = "Connect"
+        if self.conn_status.is_connected:
+            connect_msg = "Reconnect"
+        self.connect_but = QtWidgets.QPushButton(connect_msg)
+        self.connect_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.connect_but.clicked.connect(self.check_connection)
+        # Finish content
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.input_layout)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.message_l)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.connect_but)
+        add_spacer(self.content_layout, self.v_spacers)
+        # Finish layout
+        add_spacer(self.layout, self.v_spacers)
         self.layout.addLayout(self.content_layout, 1)
+        add_spacer(self.layout, self.v_spacers)
+
+    class TryConnectionWorker(QtCore.QObject):
+        """
+        Worker that will perform the connection check against the Solys2
+        """
+        finished = QtCore.Signal(bool, str)
+
+        def __init__(self, ip: str, port: int, password: str):
+            super().__init__()
+            self.ip = ip
+            self.port = port
+            self.password = password
+
+        def run(self):
+            is_connected, msg = _try_conn(self.ip, self.port, self.password)
+            self.finished.emit(is_connected, msg)
 
     @QtCore.Slot()
     def check_connection(self):
+        """
+        Check if the GUI can connect to the Solys2 with the inputed parameters.
+        """
+        self.connect_but.setEnabled(False)
         ip = self.ip_input.text()
         port = self.port_input.value()
-        password = self.port_input.value()
-        is_connected = _try_conn(ip, port, password)
+        password = self.pass_input.text()
         self.conn_status.ip = ip
         self.conn_status.port = port
         self.conn_status.password = password
-        self.conn_status.is_connected = is_connected
+
+        self.th = QtCore.QThread()
+        self.worker = ConfigurationWidget.TryConnectionWorker(ip, port, password)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.set_connection_result)
+        self.th.finished.connect(self.th.deleteLater)
+        self.th.start()
+
+    def set_connection_result(self, is_connected: bool, msg: str):
+        """
+        When the connection try is done, this function is called,
+        and it will do the needed actions.
+
+        Parameters
+        ----------
+        is_connected : bool
+            Flag that indicates if the connection was successful. True if it was.
+        msg : str
+            Error message in case it wasn't successful, success message in case it was.
+        """
+        self.message_l.setText(msg)
+        label_color = constants.COLOR_RED
+        connect_msg = "Connect"
         if is_connected:
-            pass
+            self.conn_status.save_ip_data()
+            label_color = constants.COLOR_GREEN
+            connect_msg = "Reconnect"
+        self.connect_but.setText(connect_msg)
+        self.message_l.setStyleSheet("background-color: {}".format(label_color))
+        self.message_l.repaint()
+        self.conn_status.is_connected = is_connected
+        self.solys2_w.connection_changed()
+        self.connect_but.setEnabled(True)

@@ -5,3 +5,6 @@
 #table_title {
     font-weight: bold;
 }
+#message {
+    color: white;
+}

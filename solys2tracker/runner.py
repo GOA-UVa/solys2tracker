@@ -16,15 +16,20 @@ from PySide2 import QtWidgets, QtCore, QtGui
 """___Solys2Tracker Modules___"""
 try:
     from . import constants
+    from . import ifaces
+    from . import noconflict
     from .tabs import ConfigurationWidget
     from .s2ttypes import ConnectionStatus
 except:
     import constants
+    import ifaces
+    import noconflict
     from tabs import ConfigurationWidget
     from s2ttypes import ConnectionStatus
 
 class NavBarWidget(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, conn_status: ConnectionStatus):
+        self.conn_status = conn_status
         self._build_layout()
 
     def _build_layout(self):
@@ -39,8 +44,15 @@ class NavBarWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.sun_but, 1)
         self.layout.addWidget(self.moon_but, 1)
         self.layout.addWidget(self.conf_but)
+        self.update_button_enabling()
 
-class Solys2Widget(QtWidgets.QWidget):
+    def update_button_enabling(self):
+        enabled = self.conn_status.is_connected
+        self.sun_but.setEnabled(enabled)
+        self.moon_but.setEnabled(enabled)
+        self.conf_but.setEnabled(enabled)
+
+class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict.makecls()):
     """Main widget that will contain the main functionality and other widgets.
     
     Attributes
@@ -70,12 +82,19 @@ class Solys2Widget(QtWidgets.QWidget):
         self._build_layout()
     
     def _build_layout(self):
-        self.navbar_w = NavBarWidget()
+        self.navbar_w = NavBarWidget(self.conn_status)
         self.content_w: Union[ConfigurationWidget, ConfigurationWidget] = \
-            ConfigurationWidget(self.conn_status)
+            ConfigurationWidget(self.conn_status, self)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.navbar_w)
         self.layout.addWidget(self.content_w)
+    
+    def connection_changed(self):
+        """
+        Function called when the connection status (self.conn_status) has changed.
+        It will update the navigation bar and the GUI.
+        """
+        self.navbar_w.update_button_enabling()
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main window that will contain the main widget."""
