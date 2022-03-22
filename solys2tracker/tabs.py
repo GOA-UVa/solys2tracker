@@ -6,7 +6,7 @@ It exports the following classes:
 """
 
 """___Built-In Modules___"""
-from typing import Tuple
+from typing import Tuple, List
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -17,12 +17,16 @@ try:
     from .s2ttypes import ConnectionStatus
     from . import constants
     from . import ifaces
+    from . import noconflict
     from .common import add_spacer
+    from .bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
 except:
     import constants
     import ifaces
+    import noconflict
     from s2ttypes import ConnectionStatus
     from common import add_spacer
+    from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -71,7 +75,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
     v_spacers : list of QSpacerItem
     h_spacers : list of QSpacerItem
     title : QLabel
-    layout : QBoxLayout
+    main_layout : QBoxLayout
     content_layout : QBoxLayout
     input_layout : QBoxLayout
     lay_ip : QBoxLayout
@@ -101,14 +105,14 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self._build_layout()
     
     def _build_layout(self):
-        self.layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout = QtWidgets.QVBoxLayout(self)
         self.v_spacers = []
         self.h_spacers = []
         # Title
         self.title = QtWidgets.QLabel("Configuration", alignment=QtCore.Qt.AlignCenter)
         self.title.setObjectName("section_title")
-        add_spacer(self.layout, self.v_spacers)
-        self.layout.addWidget(self.title)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.title)
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
         # Input
@@ -171,9 +175,9 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.content_layout.addWidget(self.connect_but)
         add_spacer(self.content_layout, self.v_spacers)
         # Finish layout
-        add_spacer(self.layout, self.v_spacers)
-        self.layout.addLayout(self.content_layout, 1)
-        add_spacer(self.layout, self.v_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.content_layout, 1)
+        add_spacer(self.main_layout, self.v_spacers)
 
     class TryConnectionWorker(QtCore.QObject):
         """
@@ -240,7 +244,70 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.solys2_w.connection_changed()
         self.connect_but.setEnabled(True)
 
-class SunTabWidget(QtWidgets.QWidget):
+class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
+    """
+    The sun tab.
+    """
     def __init__(self, solys2_w : ifaces.ISolys2Widget):
+        """
+        Parameters
+        ----------
+        solys2_w : ISolys2Widget
+            Main parent widget that contains the main functionality and other widgets.
+        """
         super().__init__()
         self.solys2_w = solys2_w
+        self.title_str = "SUN"
+        self.menu_options = ["Track", "Cross"]
+        self._build_layout()
+    
+    def _build_layout(self):
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.page_w = BodyMenuWidget(self, self.title_str, self.menu_options)
+        self.main_layout.addWidget(self.page_w)
+
+    def change_to_view(self, option: str) -> None:
+        if option not in self.menu_options:
+            raise Exception("Object has no function \"{}\"".format(option))
+        self.main_layout.removeWidget(self.content_w)
+        self.content_w.deleteLater()
+        if option == self.menu_options[0]:
+            self.content_w = BodyTrackWidget(self, self.title_str)
+        else:
+            self.content_w = BodyCrossWidget(self, self.title_str)
+        self.main_layout.addWidget(self.content_w)
+
+class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
+    """
+    The moon tab.
+    """
+    def __init__(self, solys2_w : ifaces.ISolys2Widget):
+        """
+        Parameters
+        ----------
+        solys2_w : ISolys2Widget
+            Main parent widget that contains the main functionality and other widgets.
+        """
+        super().__init__()
+        self.solys2_w = solys2_w
+        self.title_str = "MOON"
+        self.menu_options = ["Track", "Cross", "Black"]
+        self._build_layout()
+    
+    def _build_layout(self):
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.page_w = BodyMenuWidget(self, self.title_str, self.menu_options)
+        self.main_layout.addWidget(self.page_w)
+
+    def change_to_view(self, option: str) -> None:
+        if option not in self.menu_options:
+            raise Exception("Object has no function \"{}\"".format(option))
+        self.main_layout.removeWidget(self.content_w)
+        self.content_w.deleteLater()
+        if option == self.menu_options[0]:
+            self.content_w = BodyTrackWidget(self, self.title_str)
+        elif option == self.menu_options[1]:
+            self.content_w = BodyCrossWidget(self, self.title_str)
+        else:
+            self.content_w = BodyBlackWidget(self, self.title_str)
+        self.main_layout.addWidget(self.content_w)

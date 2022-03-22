@@ -44,3 +44,8 @@ class ISolys2Widget(ABC):
     @abstractmethod
     def change_tab_conf(self) -> None:
         pass
+
+class IBodyTabWidget(ABC):
+    @abstractmethod
+    def change_to_view(self, option: str) -> None:
+        pass
