@@ -7,9 +7,10 @@ It exports the following functions:
 
 """___Built-In Modules___"""
 from typing import List
+import logging
 
 """___Third-Party Modules___"""
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 
 """___Solys2Tracker Modules___"""
 # import here
@@ -39,3 +40,65 @@ def add_spacer(layout: QtWidgets.QBoxLayout, spacers: List[QtWidgets.QSpacerItem
     spacer = QtWidgets.QSpacerItem(w, h)
     layout.addSpacerItem(spacer)
     spacers.append(spacer)
+
+class QTextEditLogger(logging.Handler):
+    def __init__(self, worker: 'LoggerWorker'):
+        super().__init__()
+        self.worker = worker
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.worker.log(msg)
+
+class LoggerWorker(QtCore.QObject):
+    """
+    Worker that will log the messages
+    """
+    created = QtCore.Signal(logging.Handler)
+    log_msg = QtCore.Signal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.handler = QTextEditLogger(self)
+    
+    def log(self, record):
+        self.log_msg.emit(record)
+
+    def run(self):
+        self.created.emit(self.handler)
+
+class LoggerDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.widget = QtWidgets.QPlainTextEdit(self)
+        self.widget.setReadOnly(True)
+
+        self.th = QtCore.QThread()
+        self.worker = LoggerWorker()
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        #self.worker.finished.connect(self.th.quit)
+        #self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.created.connect(self.save_handler)
+        self.worker.log_msg.connect(self.log)
+        self.th.finished.connect(self.th.deleteLater)
+        self.th.start()
+
+        self.logTextBox = QTextEditLogger(self)
+        # You can format what is printed to text box
+        self.logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+        layout = QtWidgets.QVBoxLayout()
+        # Add the new logging box widget to the layout
+        layout.addWidget(self.widget)
+        self.setLayout(layout)
+    
+    def save_handler(self, handler: logging.Handler):
+        self.logTextBox = handler
+    
+    def log(self, msg: str):
+        self.widget.appendPlainText(msg)
+    
+    def get_handler(self) -> logging.Handler:
+        return self.logTextBox

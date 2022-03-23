@@ -45,7 +45,15 @@ class ISolys2Widget(ABC):
     def change_tab_conf(self) -> None:
         pass
 
+    @abstractmethod
+    def set_disabled_navbar(self, disabled: bool):
+        pass
+
 class IBodyTabWidget(ABC):
     @abstractmethod
     def change_to_view(self, option: str) -> None:
+        pass
+
+    @abstractmethod
+    def set_disabled_navbar(self, disabled: bool) -> None:
         pass

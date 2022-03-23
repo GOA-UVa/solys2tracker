@@ -19,27 +19,27 @@ try:
     from . import constants
     from . import ifaces
     from . import noconflict
-    from .tabs import ConfigurationWidget, SunTabWidget
+    from .tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
     from .s2ttypes import ConnectionStatus
 except:
     import constants
     import ifaces
     import noconflict
-    from tabs import ConfigurationWidget, SunTabWidget
+    from tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
     from s2ttypes import ConnectionStatus
 
 class NavBarWidget(QtWidgets.QWidget):
     """
     Navigaton bar that allows the user to change between tabs.
     """
-    def __init__(self, conn_status: ConnectionStatus, solys2_w : ifaces.ISolys2Widget):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
         """
         Parameters
         ----------
-        conn_status : ConnectionStatus
-            Current status of the GUI connection with the Solys2.
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
         """
         self.conn_status = conn_status
         self.solys2_w = solys2_w
@@ -62,11 +62,14 @@ class NavBarWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.conf_but)
         self.update_button_enabling()
 
-    def update_button_enabling(self):
-        enabled = self.conn_status.is_connected
+    def set_enabled_buttons(self, enabled: bool):
         self.sun_but.setEnabled(enabled)
         self.moon_but.setEnabled(enabled)
         self.conf_but.setEnabled(enabled)
+
+    def update_button_enabling(self):
+        enabled = self.conn_status.is_connected
+        self.set_enabled_buttons(enabled)
     
     @QtCore.Slot()
     def press_sun(self):
@@ -110,9 +113,9 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         self._build_layout()
     
     def _build_layout(self):
-        self.navbar_w = NavBarWidget(self.conn_status, self)
+        self.navbar_w = NavBarWidget(self, self.conn_status)
         self.content_w: Union[ConfigurationWidget, SunTabWidget] = \
-            ConfigurationWidget(self.conn_status, self)
+            ConfigurationWidget(self, self.conn_status)
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.addWidget(self.navbar_w)
         self.main_layout.addWidget(self.content_w)
@@ -123,6 +126,9 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         It will update the navigation bar and the GUI.
         """
         self.navbar_w.update_button_enabling()
+    
+    def set_disabled_navbar(self, disabled: bool):
+        self.navbar_w.set_enabled_buttons(not disabled)
 
     class TabEnum(Enum):
         SUN = 0
@@ -133,11 +139,11 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         self.main_layout.removeWidget(self.content_w)
         self.content_w.deleteLater()
         if tab == Solys2Widget.TabEnum.SUN:
-            self.content_w = SunTabWidget(self)
-        #elif tab == Solys2Widget.TabEnum.MOON:
-            #self.content_w = MoonTabWidget(self)
+            self.content_w = SunTabWidget(self, self.conn_status)
+        elif tab == Solys2Widget.TabEnum.MOON:
+            self.content_w = MoonTabWidget(self, self.conn_status)
         else:
-            self.content_w = ConfigurationWidget(self.conn_status, self)
+            self.content_w = ConfigurationWidget(self, self.conn_status)
         self.main_layout.addWidget(self.content_w)
 
     def change_tab_sun(self):

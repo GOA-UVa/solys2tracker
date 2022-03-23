@@ -1,4 +1,5 @@
 """___Built-In Modules___"""
+from enum import Enum
 import pickle
 from dataclasses import dataclass
 
@@ -49,3 +50,7 @@ class ConnectionStatus:
         data = {"ip":self.ip}
         pickle.dump(data, f)
         f.close()
+
+class BodyEnum(Enum):
+    SUN = 0
+    MOON = 1

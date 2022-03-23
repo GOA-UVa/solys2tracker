@@ -14,7 +14,7 @@ from solys2 import solys2 as s2
 
 """___Solys2Tracker Modules___"""
 try:
-    from .s2ttypes import ConnectionStatus
+    from .s2ttypes import ConnectionStatus, BodyEnum
     from . import constants
     from . import ifaces
     from . import noconflict
@@ -24,7 +24,7 @@ except:
     import constants
     import ifaces
     import noconflict
-    from s2ttypes import ConnectionStatus
+    from s2ttypes import ConnectionStatus, BodyEnum
     from common import add_spacer
     from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
 
@@ -90,14 +90,14 @@ class ConfigurationWidget(QtWidgets.QWidget):
     message_l : QLabel
     connect_but : QPushButton
     """
-    def __init__(self, conn_status: ConnectionStatus, solys2_w : ifaces.ISolys2Widget):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
         """
         Parameters
         ----------
-        conn_status : ConnectionStatus
-            Current status of the GUI connection with the Solys2.
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.conn_status = conn_status
@@ -243,20 +243,26 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.conn_status.is_connected = is_connected
         self.solys2_w.connection_changed()
         self.connect_but.setEnabled(True)
+    
+    def set_disabled_navbar(self, disabled: bool):
+        self.solys2_w.set_disabled_navbar(disabled)
 
 class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
     The sun tab.
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
         """
         Parameters
         ----------
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.solys2_w = solys2_w
+        self.conn_status = conn_status
         self.title_str = "SUN"
         self.menu_options = ["Track", "Cross"]
         self._build_layout()
@@ -269,27 +275,34 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
     def change_to_view(self, option: str) -> None:
         if option not in self.menu_options:
             raise Exception("Object has no function \"{}\"".format(option))
-        self.main_layout.removeWidget(self.content_w)
-        self.content_w.deleteLater()
+        self.main_layout.removeWidget(self.page_w)
+        self.page_w.deleteLater()
+        body = BodyEnum.SUN
         if option == self.menu_options[0]:
-            self.content_w = BodyTrackWidget(self, self.title_str)
+            self.page_w = BodyTrackWidget(self, body, self.conn_status)
         else:
-            self.content_w = BodyCrossWidget(self, self.title_str)
-        self.main_layout.addWidget(self.content_w)
+            self.page_w = BodyCrossWidget(self, self.title_str)
+        self.main_layout.addWidget(self.page_w)
+    
+    def set_disabled_navbar(self, disabled: bool):
+        self.solys2_w.set_disabled_navbar(disabled)
 
 class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
     The moon tab.
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
         """
         Parameters
         ----------
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.solys2_w = solys2_w
+        self.conn_status = conn_status
         self.title_str = "MOON"
         self.menu_options = ["Track", "Cross", "Black"]
         self._build_layout()
@@ -302,12 +315,16 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
     def change_to_view(self, option: str) -> None:
         if option not in self.menu_options:
             raise Exception("Object has no function \"{}\"".format(option))
-        self.main_layout.removeWidget(self.content_w)
-        self.content_w.deleteLater()
+        self.main_layout.removeWidget(self.page_w)
+        self.page_w.deleteLater()
+        body = BodyEnum.MOON
         if option == self.menu_options[0]:
-            self.content_w = BodyTrackWidget(self, self.title_str)
+            self.page_w = BodyTrackWidget(self, body, self.conn_status)
         elif option == self.menu_options[1]:
-            self.content_w = BodyCrossWidget(self, self.title_str)
+            self.page_w = BodyCrossWidget(self, self.title_str)
         else:
-            self.content_w = BodyBlackWidget(self, self.title_str)
-        self.main_layout.addWidget(self.content_w)
+            self.page_w = BodyBlackWidget(self, self.title_str)
+        self.main_layout.addWidget(self.page_w)
+
+    def set_disabled_navbar(self, disabled: bool):
+        self.solys2_w.set_disabled_navbar(disabled)
