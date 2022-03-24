@@ -68,11 +68,10 @@ class QTextEditLogger(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
         self.worker.callback(msg)
-    
+
     def handle_data(self, msg: str):
         self.widget.appendPlainText(msg)
         self.widget.verticalScrollBar().setValue(self.widget.verticalScrollBar().maximum())
-        
 
 class LoggerDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
     def __init__(self, parent=None):

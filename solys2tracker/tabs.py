@@ -186,6 +186,16 @@ class ConfigurationWidget(QtWidgets.QWidget):
         finished = QtCore.Signal(bool, str)
 
         def __init__(self, ip: str, port: int, password: str):
+            """
+            Parameters
+            ----------
+            ip : str
+                Solys2 connection ip.
+            port : int
+                Solys2 connection port.
+            password : str
+                Solys2 connection password.
+            """
             super().__init__()
             self.ip = ip
             self.port = port
@@ -273,6 +283,14 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         self.main_layout.addWidget(self.page_w)
 
     def change_to_view(self, option: str) -> None:
+        """
+        Changes the page view to the selected option. It must be in self.get_menu_options()
+
+        Parameters
+        ----------
+        option : str
+            Selected option that the GUI will change its page to.
+        """
         if option not in self.menu_options:
             raise Exception("Object has no function \"{}\"".format(option))
         self.main_layout.removeWidget(self.page_w)
@@ -285,7 +303,26 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         self.main_layout.addWidget(self.page_w)
     
     def set_disabled_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Chosen disabled status.
+        """
         self.solys2_w.set_disabled_navbar(disabled)
+
+    def get_menu_options(self) -> List[str]:
+        """
+        Obtain all available page options.
+
+        Returns
+        -------
+        options : list of str
+            List with all available options.
+        """
+        return self.menu_options
 
 class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
@@ -313,6 +350,14 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         self.main_layout.addWidget(self.page_w)
 
     def change_to_view(self, option: str) -> None:
+        """
+        Changes the page view to the selected option. It must be in self.get_menu_options()
+
+        Parameters
+        ----------
+        option : str
+            Selected option that the GUI will change its page to.
+        """
         if option not in self.menu_options:
             raise Exception("Object has no function \"{}\"".format(option))
         self.main_layout.removeWidget(self.page_w)
@@ -327,4 +372,23 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         self.main_layout.addWidget(self.page_w)
 
     def set_disabled_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Chosen disabled status.
+        """
         self.solys2_w.set_disabled_navbar(disabled)
+
+    def get_menu_options(self) -> List[str]:
+        """
+        Obtain all available page options.
+
+        Returns
+        -------
+        options : list of str
+            List with all available options.
+        """
+        return self.menu_options

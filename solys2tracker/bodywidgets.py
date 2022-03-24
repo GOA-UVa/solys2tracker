@@ -36,7 +36,20 @@ __email__ = "gaton@goa.uva.es"
 __status__ = "Development"
 
 class BodyMenuWidget(QtWidgets.QWidget):
+    """
+    Body page representing the menu, which will contain the available options for the user.
+    """
     def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str, options: List[str]):
+        """
+        Parameters
+        ----------
+        body_tab : ifaces.IBodyTabWidget
+            Parent body tab that contains this page.
+        title_str : str
+            Title string that will be shown
+        options : list of str
+            Options that the menu tab will have
+        """
         super().__init__()
         self.body_tab = body_tab
         self.title_str = title_str
@@ -74,12 +87,37 @@ class BodyMenuWidget(QtWidgets.QWidget):
     
     @QtCore.Slot()
     def button_press(self, option: str):
+        """
+        Option button has been pressed.
+        
+        Parameters
+        ----------
+        option : str
+            Pressed option.
+        """
         self.body_tab.change_to_view(option)
 
 class BodyTrackWidget(QtWidgets.QWidget):
+    """
+    Body page that contains the tracking functionality.
+    """
     def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
         logfile: str = "log.temp.out.txt", kernels_path: str = ""):
-        """"""
+        """
+        Parameters
+        ----------
+        body_tab : ifaces.IBodyTabWidget
+            Parent body tab that contains this page.
+        body : BodyEnum
+            Body (moon or sun) of the body_tab.
+        conn_status : ConnectionStatus
+            Connection data and status.
+        logfile : str
+            Output logfile. By default is "log.temp.out.txt".
+        kernels_path : str
+            In case that SPICE is used, the path where the kernels directory is located
+            must be specified.
+        """
         super().__init__()
         self.body_tab = body_tab
         self.body = body
@@ -159,6 +197,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def track_button_press(self):
+        """
+        Slot for the GUI action of pressing the start tracking button.
+        """
         self.track_button.setEnabled(False)
         self.body_tab.set_disabled_navbar(True)
         self.seconds_input.setDisabled(True)
@@ -184,9 +225,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
             add_spacer(self.content_layout, self.v_spacers)
         except:
             self.finished_tracking()
-    
-    def save_tracker(self, bt: aut._BodyTracker):
-        self.tracker = bt
 
     class TrackFinisherWorker(QtCore.QObject):
         """
@@ -195,6 +233,12 @@ class BodyTrackWidget(QtWidgets.QWidget):
         finished = QtCore.Signal()
 
         def __init__(self, tracker: aut._BodyTracker):
+            """
+            Parameters
+            ----------
+            tracker : _BodyTracker
+                bodytracker that will track the celestial body.
+            """
             super().__init__()
             self.bt = tracker
 
@@ -206,6 +250,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def cancel_button_press(self):
+        "Slot for the GUI action of pressing the cancel tracking button."
         self.cancel_button.setDisabled(True)
         self.th = QtCore.QThread()
         self.worker = BodyTrackWidget.TrackFinisherWorker(self.tracker)
@@ -218,6 +263,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.th.start()
     
     def finished_tracking(self):
+        """Tracking finished/stopped. Perform the needed actions."""
         self.log_handler.end_handler()
         self.cancel_button.setDisabled(False)
         self.cancel_button.setVisible(False)

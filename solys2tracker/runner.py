@@ -63,24 +63,34 @@ class NavBarWidget(QtWidgets.QWidget):
         self.update_button_enabling()
 
     def set_enabled_buttons(self, enabled: bool):
+        """
+        Enables or disables all the navigation buttons.
+        """
         self.sun_but.setEnabled(enabled)
         self.moon_but.setEnabled(enabled)
         self.conf_but.setEnabled(enabled)
 
     def update_button_enabling(self):
+        """
+        Updates the enabled status of the buttons based on if the connection_status
+        is connected.
+        """
         enabled = self.conn_status.is_connected
         self.set_enabled_buttons(enabled)
     
     @QtCore.Slot()
     def press_sun(self):
+        """Press the SUN button."""
         self.solys2_w.change_tab_sun()
 
     @QtCore.Slot()
     def press_moon(self):
+        """Press the MOON button."""
         self.solys2_w.change_tab_moon()
 
     @QtCore.Slot()
     def press_conf(self):
+        """Press the CONFIGURATION button."""
         self.solys2_w.change_tab_conf()
 
 class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict.makecls()):
@@ -128,14 +138,31 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         self.navbar_w.update_button_enabling()
     
     def set_disabled_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all the navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Disabled status.
+        """
         self.navbar_w.set_enabled_buttons(not disabled)
 
     class TabEnum(Enum):
+        """Enum representing all existing tabs"""
         SUN = 0
         MOON = 1
         CONF = 2
 
     def _change_tab(self, tab: TabEnum):
+        """
+        Changes tab to the chosen one.
+        
+        Parameters
+        ----------
+        tab : TabEnum
+            Selected tab which the GUI will change to.
+        """
         self.main_layout.removeWidget(self.content_w)
         self.content_w.deleteLater()
         if tab == Solys2Widget.TabEnum.SUN:
@@ -163,7 +190,6 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         Change the tab to the CONFIGURATION tab.
         """
         self._change_tab(Solys2Widget.TabEnum.CONF)
-        
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main window that will contain the main widget."""
