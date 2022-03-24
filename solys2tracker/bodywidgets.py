@@ -8,6 +8,8 @@ It exports the following classes:
 """___Built-In Modules___"""
 from typing import List, Tuple
 import time
+from threading import Thread
+import logging
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -20,13 +22,13 @@ try:
     from . import constants
     from . import ifaces
     from . import noconflict
-    from .common import add_spacer, LoggerDialog
+    from .common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
 except:
     import constants
     import ifaces
     import noconflict
     from s2ttypes import ConnectionStatus, BodyEnum
-    from common import add_spacer, LoggerDialog
+    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -205,6 +207,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.seconds_input.setDisabled(True)
         self.altitude_input.setDisabled(True)
         self.log_handler.setVisible(True)
+        self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
         try:
             cs = self.conn_status
@@ -223,7 +226,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, True, self.logfile,
                     library, altitude, self.kernels_path, self.log_handlers)
             self.cancel_button.setVisible(True)
-            add_spacer(self.content_layout, self.v_spacers)
         except:
             self.finished_tracking()
 
@@ -275,11 +277,70 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.body_tab.set_disabled_navbar(False)
 
 class BodyCrossWidget(QtWidgets.QWidget):
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str):
+    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
+        logfile: str = "log.temp.out.txt", kernels_path: str = ""):
+        """
+        Parameters
+        ----------
+        body_tab : ifaces.IBodyTabWidget
+            Parent body tab that contains this page.
+        body : BodyEnum
+            Body (moon or sun) of the body_tab.
+        conn_status : ConnectionStatus
+            Connection data and status.
+        logfile : str
+            Output logfile. By default is "log.temp.out.txt".
+        kernels_path : str
+            In case that SPICE is used, the path where the kernels directory is located
+            must be specified.
+        """
         super().__init__()
         self.body_tab = body_tab
-        self.title_str = title_str + " | " + constants.CROSS_STR
+        self.body = body
+        self.title_str = "SUN"
+        if body != BodyEnum.SUN:
+            self.title_str = "MOON"
+        self.title_str = self.title_str + " | " + constants.CROSS_STR
+        self.conn_status = conn_status
+        self.logfile = logfile
+        self.kernels_path = kernels_path
         self._build_layout()
+
+    class QLabelCrossCountdownLogger(logging.Handler):
+        def __init__(self, label: QtWidgets.QLabel):
+            super().__init__()
+            self.widget = label
+        
+        def start_handler(self):
+            self.worker = LogWorker()
+
+            # Mover worker to thread and connect signal
+            self.th = QtCore.QThread()
+            self.worker.data_ready.connect(self.handle_data)
+            self.worker.moveToThread(self.th)
+            self.th.finished.connect(self.th.deleteLater)
+            self.th.start()
+
+        def end_logger(self):
+            self.th.quit()
+            self.worker.deleteLater()
+
+        def emit(self, record):
+            msg = self.format(record)
+            if "COUNTDOWN:" in msg:
+                num_str = msg[msg.rindex(':')+1:]
+                self.worker.callback(num_str)
+
+        def handle_data(self, msg: str):
+            try:
+                num = float(msg)
+                if num > 0:
+                    label_msg = msg
+                else:
+                    label_msg = "MEASURE NOW"
+            except:
+                label_msg = "ERROR"
+            self.widget.setText(label_msg)
 
     def _build_layout(self):
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -292,10 +353,223 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.title)
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
+        # Range
+        self.range_layout = QtWidgets.QHBoxLayout()
+        self.range_label = QtWidgets.QLabel("Range (°):", alignment=QtCore.Qt.AlignCenter)
+        self.range_first_input = QtWidgets.QDoubleSpinBox()
+        self.range_second_input = QtWidgets.QDoubleSpinBox()
+        self.range_first_input.setMinimum(-100)
+        self.range_first_input.setMaximum(100)
+        self.range_first_input.setValue(-1.5)
+        self.range_second_input.setMinimum(-100)
+        self.range_second_input.setMaximum(100)
+        self.range_second_input.setValue(1.5)
+        add_spacer(self.range_layout, self.h_spacers)
+        self.range_layout.addWidget(self.range_label)
+        add_spacer(self.range_layout, self.h_spacers)
+        self.range_layout.addWidget(self.range_first_input)
+        add_spacer(self.range_layout, self.h_spacers)
+        self.range_layout.addWidget(self.range_second_input)
+        add_spacer(self.range_layout, self.h_spacers)
+        # Step
+        self.step_layout = QtWidgets.QHBoxLayout()
+        self.step_label = QtWidgets.QLabel("Step (°):", alignment=QtCore.Qt.AlignCenter)
+        self.step_input = QtWidgets.QDoubleSpinBox()
+        self.step_input.setMinimum(-100)
+        self.step_input.setMaximum(100)
+        self.step_input.setValue(0.3)
+        add_spacer(self.step_layout, self.h_spacers)
+        self.step_layout.addWidget(self.step_label)
+        add_spacer(self.step_layout, self.h_spacers)
+        self.step_layout.addWidget(self.step_input)
+        add_spacer(self.step_layout, self.h_spacers)
+        # Countdown
+        self.countdown_layout = QtWidgets.QHBoxLayout()
+        self.countdown_label = QtWidgets.QLabel("Countdown (sec.):", alignment=QtCore.Qt.AlignCenter)
+        self.countdown_input = QtWidgets.QSpinBox()
+        self.countdown_input.setMinimum(-100)
+        self.countdown_input.setMaximum(100)
+        self.countdown_input.setValue(5)
+        add_spacer(self.countdown_layout, self.h_spacers)
+        self.countdown_layout.addWidget(self.countdown_label)
+        add_spacer(self.countdown_layout, self.h_spacers)
+        self.countdown_layout.addWidget(self.countdown_input)
+        add_spacer(self.countdown_layout, self.h_spacers)
+        # Rest
+        self.rest_layout = QtWidgets.QHBoxLayout()
+        self.rest_label = QtWidgets.QLabel("Rest (sec.):", alignment=QtCore.Qt.AlignCenter)
+        self.rest_input = QtWidgets.QSpinBox()
+        self.rest_input.setMinimum(-100)
+        self.rest_input.setMaximum(100)
+        self.rest_input.setValue(1)
+        add_spacer(self.rest_layout, self.h_spacers)
+        self.rest_layout.addWidget(self.rest_label)
+        add_spacer(self.rest_layout, self.h_spacers)
+        self.rest_layout.addWidget(self.rest_input)
+        add_spacer(self.rest_layout, self.h_spacers)
+        # Height
+        self.height_layout = QtWidgets.QHBoxLayout()
+        self.height_label = QtWidgets.QLabel("Height (m):", alignment=QtCore.Qt.AlignCenter)
+        self.height_input = QtWidgets.QSpinBox()
+        self.height_input.setMinimum(-1000)
+        self.height_input.setMaximum(1000000)
+        self.height_input.setValue(0)
+        add_spacer(self.height_layout, self.h_spacers)
+        self.height_layout.addWidget(self.height_label)
+        add_spacer(self.height_layout, self.h_spacers)
+        self.height_layout.addWidget(self.height_input)
+        add_spacer(self.height_layout, self.h_spacers)
+        # Countdown
+        self.log_countdown_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.log_countdown_label.setObjectName("countdown")
+        self.log_countdown = BodyCrossWidget.QLabelCrossCountdownLogger(self.log_countdown_label)
+        self.log_handlers = [self.log_countdown]
+        self.log_countdown_label.setVisible(False)
+        # Logger
+        self.log_handler = LoggerDialog()
+        self.log_handlers += [self.log_handler.get_handler()]
+        self.log_handler.setVisible(False)
+        # Start button
+        self.start_button = QtWidgets.QPushButton("Start Cross")
+        self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.start_button.clicked.connect(self.press_start_cross)
+        # Cancel button
+        self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.cancel_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.cancel_button.clicked.connect(self.cancel_button_press)
+        self.cancel_button.setVisible(False)
+        # Finish content
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.range_layout)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.step_layout)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.countdown_layout)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.rest_layout)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.log_countdown_label)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.log_handler)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.start_button)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.cancel_button)
+        add_spacer(self.content_layout, self.v_spacers)
         # Finish layout
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
+
+    @QtCore.Slot()
+    def press_start_cross(self):
+        """
+        Slot for the GUI action of pressing the start cross button.
+        """
+        self.start_button.setEnabled(False)
+        self.body_tab.set_disabled_navbar(True)
+        self.range_first_input.setDisabled(True)
+        self.range_second_input.setDisabled(True)
+        self.step_input.setDisabled(True)
+        self.countdown_input.setDisabled(True)
+        self.rest_input.setDisabled(True)
+        self.log_handler.setVisible(True)
+        self.log_handler.start_handler()
+        self.log_countdown_label.setVisible(True)
+        self.log_countdown.start_handler()
+        self.body_tab.set_enabled_close_button(False)
+        self.is_finished = aut._ContainedBool(False)
+        try:
+            cs = self.conn_status
+            az_min = ze_min = self.range_first_input.value()
+            az_max = ze_max = self.range_second_input.value()
+            az_step = ze_step = self.step_input.value()
+            countdown = self.countdown_input.value()
+            rest = self.rest_input.value()
+            cp = aut.CrossParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step, countdown, rest)
+            altitude = self.height_input.value()
+            logger = get_custom_logger(self.logfile, self.log_handlers)
+            if self.body == BodyEnum.SUN:
+                library = aut.psc.SunLibrary.SPICEDSUN
+                if self.kernels_path is None or self.kernels_path == "":
+                    library = aut.psc.SunLibrary.PYSOLAR
+                self.cross_thread = Thread(target=aut.solar_cross, args=[cs.ip, logger, cp,
+                    cs.port, cs.password, self.is_finished, library, altitude,
+                    self.kernels_path])
+            else:
+                library = aut.psc.MoonLibrary.SPICEDMOON
+                if self.kernels_path is None or self.kernels_path == "":
+                    library = aut.psc.MoonLibrary.EPHEM_MOON
+                self.cross_thread = Thread(target=aut.lunar_cross, args=[cs.ip, logger, cp,
+                    cs.port, cs.password, self.is_finished, library, altitude,
+                    self.kernels_path])
+            self.cross_thread.start()
+            self.cancel_button.setVisible(True)
+            self.start_checking_cross_end()
+        except:
+            self.finished_crossing()
+    
+    class CrossWorker(QtCore.QObject):
+        """
+        Worker that will check for the cross to finish.
+        """
+        finished = QtCore.Signal()
+
+        def __init__(self, is_finished: aut._ContainedBool):
+            """
+            Parameters
+            ----------
+            is_finished : _ContainedBool
+                Contained bool that contains the info that if the cross has finished.
+            """
+            super().__init__()
+            self.is_finished = is_finished
+
+        def run(self):
+            while not self.is_finished.value:
+                time.sleep(1)
+            self.finished.emit()
+
+    def start_checking_cross_end(self):
+        self.th = QtCore.QThread()
+        self.worker = BodyCrossWidget.CrossWorker(self.is_finished)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.finished_crossing)
+        self.th.finished.connect(self.th.deleteLater)
+        self.th.start()
+
+    @QtCore.Slot()
+    def cancel_button_press(self):
+        "Slot for the GUI action of pressing the cancel crossing button."
+        self.cancel_button.setDisabled(True)
+        self.th = QtCore.QThread()
+        self.worker = BodyCrossWidget.CrossWorker(self.is_finished)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.finished_crossing)
+        self.th.finished.connect(self.th.deleteLater)
+        self.th.start()
+    
+    def finished_crossing(self):
+        """Crossing finished/stopped. Perform the needed actions."""
+        self.body_tab.set_enabled_close_button(True)
+        self.log_handler.end_handler()
+        self.log_countdown.end_logger()
+        self.cancel_button.setDisabled(False)
+        self.cancel_button.setVisible(False)
+        self.start_button.setEnabled(True)
+        self.body_tab.set_disabled_navbar(False)
+        self.range_first_input.setDisabled(False)
+        self.range_second_input.setDisabled(False)
+        self.step_input.setDisabled(False)
+        self.countdown_input.setDisabled(False)
+        self.rest_input.setDisabled(False)
+        self.body_tab.set_disabled_navbar(False)
 
 class BodyBlackWidget(QtWidgets.QWidget):
     def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str):

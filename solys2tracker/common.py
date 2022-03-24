@@ -8,6 +8,8 @@ It exports the following functions:
 """___Built-In Modules___"""
 from typing import List
 import logging
+import random
+import string
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore
@@ -52,6 +54,8 @@ class QTextEditLogger(logging.Handler):
         super().__init__()
         self.widget = QtWidgets.QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
+    
+    def start_handler(self):
         self.worker = LogWorker()
 
         # Mover worker to thread and connect signal
@@ -89,6 +93,58 @@ class LoggerDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
     
     def end_handler(self):
         self.logTextBox.end_logger()
+    
+    def start_handler(self):
+        self.logTextBox.start_handler()
 
     def get_handler(self) -> logging.Handler:
         return self.logTextBox
+
+def _gen_random_str(len: int) -> str:
+    """
+    Return a random str of the specified length.
+
+    Parameters
+    ----------
+    len : int
+        Length of the desired str.
+
+    Returns
+    -------
+    rand_str : str
+        Generated random str of the specified length.
+    """
+    return ''.join(random.choice(string.ascii_letters) for i in range(len))
+
+def get_custom_logger(logfile: str, extra_log_handlers: List[logging.Handler]) -> logging.Logger:
+    """Configure the logging output
+    
+    Shell logging at warning level and file logger at debug level if log is True.
+
+    Parameters
+    ----------
+    log : bool
+        True if some logging is required. Otherwise silent except for warnings and errors.
+    logfile : str
+        Path of the file where the logging will be stored. In case that it's not used, it will be
+        printed in stderr.
+    extra_log_handlers : list of logging.Handler
+        Custom handlers which the log will also log to.
+    """
+    randstr = _gen_random_str(20)
+    logging.basicConfig(level=logging.WARNING)
+    for handler in logging.getLogger().handlers:
+        handler.setLevel(logging.WARNING)
+    logger = logging.getLogger('solys2tracker-{}'.format(randstr))
+    for hand in extra_log_handlers:
+        logger.addHandler(hand)
+    if logfile != "":
+        log_handler = logging.FileHandler(logfile, mode='a')
+        log_handler.setFormatter(logging.Formatter('%(levelname)s:%(message)s'))
+        logger.addHandler(log_handler)
+        logger.setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.DEBUG)
+        for handler in logging.getLogger().handlers:
+            handler.setLevel(logging.DEBUG)
+    return logger

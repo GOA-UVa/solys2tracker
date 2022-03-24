@@ -8,3 +8,8 @@
 #message {
     color: white;
 }
+#countdown {
+    font-size: 25px;
+    font-weight: bold;
+    color: red;
+}

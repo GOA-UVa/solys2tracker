@@ -318,7 +318,7 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         if option == self.menu_options[0]:
             self.page_w = BodyTrackWidget(self, body, self.conn_status)
         else:
-            self.page_w = BodyCrossWidget(self, self.title_str)
+            self.page_w = BodyCrossWidget(self, body, self.conn_status)
         self.main_layout.addWidget(self.page_w)
     
     def set_disabled_navbar(self, disabled: bool):
@@ -396,7 +396,7 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         if option == self.menu_options[0]:
             self.page_w = BodyTrackWidget(self, body, self.conn_status)
         elif option == self.menu_options[1]:
-            self.page_w = BodyCrossWidget(self, self.title_str)
+            self.page_w = BodyCrossWidget(self, body, self.conn_status)
         else:
             self.page_w = BodyBlackWidget(self, self.title_str)
         self.main_layout.addWidget(self.page_w)
