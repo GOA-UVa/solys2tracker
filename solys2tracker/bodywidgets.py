@@ -205,6 +205,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.seconds_input.setDisabled(True)
         self.altitude_input.setDisabled(True)
         self.log_handler.setVisible(True)
+        self.body_tab.set_enabled_close_button(False)
         try:
             cs = self.conn_status
             seconds = self.seconds_input.value()
@@ -264,6 +265,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
     
     def finished_tracking(self):
         """Tracking finished/stopped. Perform the needed actions."""
+        self.body_tab.set_enabled_close_button(True)
         self.log_handler.end_handler()
         self.cancel_button.setDisabled(False)
         self.cancel_button.setVisible(False)

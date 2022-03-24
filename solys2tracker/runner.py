@@ -108,6 +108,8 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         Main layout of the widget.
     conn_status : ConnectionStatus
         Current status of the GUI connection with the Solys2.
+    can_close : bool
+        Flag that lets the window know if the widget should not be closed.
     """
     def __init__(self, kernel_path: str = constants.KERNELS_PATH):
         """
@@ -120,6 +122,7 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         self.kernel_path = kernel_path
         self.is_connected = False
         self.conn_status = ConnectionStatus(None, None, None, False)
+        self.can_close = True
         self._build_layout()
     
     def _build_layout(self):
@@ -147,6 +150,17 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
             Disabled status.
         """
         self.navbar_w.set_enabled_buttons(not disabled)
+    
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
+        """
+        self.can_close = enabled
 
     class TabEnum(Enum):
         """Enum representing all existing tabs"""
@@ -199,7 +213,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         solys2_w: Solys2Widget = self.centralWidget()
         #solys2_w.close_results()
-        return super().closeEvent(event)
+        if solys2_w.can_close:
+            return super().closeEvent(event)
+        event.ignore()
+        self.setWindowState(QtCore.Qt.WindowMinimized)
 
 def filepathToStr(filepath: str) -> str:
     """Given filepath it returns its contents as a string
@@ -236,6 +253,7 @@ def main():
     app = QtWidgets.QApplication([constants.APPLICATION_NAME])
     window = MainWindow()
     main_widget = Solys2Widget(kernels_path)
+    window.setMinimumSize(600, 500)
     window.setCentralWidget(main_widget)
     window.show()
     window.setWindowTitle(constants.APPLICATION_NAME)

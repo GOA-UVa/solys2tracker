@@ -70,6 +70,18 @@ class ISolys2Widget(ABC):
         """
         pass
 
+    @abstractmethod
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
+        """
+        pass
+
 class IBodyTabWidget(ABC):
     @abstractmethod
     def change_to_view(self, option: str) -> None:
@@ -104,5 +116,17 @@ class IBodyTabWidget(ABC):
         -------
         options : list of str
             List with all available options.
+        """
+        pass
+
+    @abstractmethod
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
         """
         pass

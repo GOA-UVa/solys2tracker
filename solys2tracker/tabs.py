@@ -255,7 +255,26 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.connect_but.setEnabled(True)
     
     def set_disabled_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Chosen disabled status.
+        """
         self.solys2_w.set_disabled_navbar(disabled)
+    
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
+        """
+        self.solys2_w.set_enabled_close_button(enabled)
 
 class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
@@ -323,6 +342,17 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
             List with all available options.
         """
         return self.menu_options
+    
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
+        """
+        self.solys2_w.set_enabled_close_button(enabled)
 
 class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
@@ -392,3 +422,14 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
             List with all available options.
         """
         return self.menu_options
+
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
+        """
+        self.solys2_w.set_enabled_close_button(enabled)
