@@ -41,64 +41,55 @@ def add_spacer(layout: QtWidgets.QBoxLayout, spacers: List[QtWidgets.QSpacerItem
     layout.addSpacerItem(spacer)
     spacers.append(spacer)
 
+class LogWorker(QtCore.QObject):
+    data_ready = QtCore.Signal(str)
+
+    def callback(self, msg: str):
+        self.data_ready.emit(msg)
+
 class QTextEditLogger(logging.Handler):
-    def __init__(self, worker: 'LoggerWorker'):
+    def __init__(self, parent):
         super().__init__()
-        self.worker = worker
+        self.widget = QtWidgets.QPlainTextEdit(parent)
+        self.widget.setReadOnly(True)
+        self.worker = LogWorker()
+
+        # Mover worker to thread and connect signal
+        self.th = QtCore.QThread()
+        self.worker.data_ready.connect(self.handle_data)
+        self.worker.moveToThread(self.th)
+        self.th.finished.connect(self.th.deleteLater)
+        self.th.start()
+
+    def end_logger(self):
+        self.th.quit()
+        self.worker.deleteLater()
 
     def emit(self, record):
         msg = self.format(record)
-        self.worker.log(msg)
-
-class LoggerWorker(QtCore.QObject):
-    """
-    Worker that will log the messages
-    """
-    created = QtCore.Signal(logging.Handler)
-    log_msg = QtCore.Signal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.handler = QTextEditLogger(self)
+        self.worker.callback(msg)
     
-    def log(self, record):
-        self.log_msg.emit(record)
-
-    def run(self):
-        self.created.emit(self.handler)
+    def handle_data(self, msg: str):
+        self.widget.appendPlainText(msg)
+        self.widget.verticalScrollBar().setValue(self.widget.verticalScrollBar().maximum())
+        
 
 class LoggerDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.widget = QtWidgets.QPlainTextEdit(self)
-        self.widget.setReadOnly(True)
-
-        self.th = QtCore.QThread()
-        self.worker = LoggerWorker()
-        self.worker.moveToThread(self.th)
-        self.th.started.connect(self.worker.run)
-        #self.worker.finished.connect(self.th.quit)
-        #self.worker.finished.connect(self.worker.deleteLater)
-        self.worker.created.connect(self.save_handler)
-        self.worker.log_msg.connect(self.log)
-        self.th.finished.connect(self.th.deleteLater)
-        self.th.start()
-
         self.logTextBox = QTextEditLogger(self)
         # You can format what is printed to text box
         self.logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        self.logTextBox.setLevel(logging.INFO)
 
         layout = QtWidgets.QVBoxLayout()
         # Add the new logging box widget to the layout
-        layout.addWidget(self.widget)
+        layout.addWidget(self.logTextBox.widget)
         self.setLayout(layout)
     
-    def save_handler(self, handler: logging.Handler):
-        self.logTextBox = handler
-    
-    def log(self, msg: str):
-        self.widget.appendPlainText(msg)
-    
+    def end_handler(self):
+        self.logTextBox.end_logger()
+
     def get_handler(self) -> logging.Handler:
         return self.logTextBox

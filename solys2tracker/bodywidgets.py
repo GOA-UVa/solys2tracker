@@ -177,7 +177,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
             else:
                 library = aut.psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
-                    aut.psc.MoonLibrary.EPHEM_MOON
+                    library = aut.psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, True, self.logfile,
                     library, altitude, self.kernels_path, self.log_handlers)
             self.cancel_button.setVisible(True)
@@ -218,6 +218,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.th.start()
     
     def finished_tracking(self):
+        self.log_handler.end_handler()
         self.cancel_button.setDisabled(False)
         self.cancel_button.setVisible(False)
         self.seconds_input.setDisabled(False)
