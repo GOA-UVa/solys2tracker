@@ -398,7 +398,7 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         elif option == self.menu_options[1]:
             self.page_w = BodyCrossWidget(self, body, self.conn_status)
         else:
-            self.page_w = BodyBlackWidget(self, self.title_str)
+            self.page_w = BodyBlackWidget(self, body, self.conn_status)
         self.main_layout.addWidget(self.page_w)
 
     def set_disabled_navbar(self, disabled: bool):

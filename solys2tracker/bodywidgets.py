@@ -568,10 +568,33 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.body_tab.set_disabled_navbar(False)
 
 class BodyBlackWidget(QtWidgets.QWidget):
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str):
+    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
+        logfile: str = "log.temp.out.txt", kernels_path: str = ""):
+        """
+        Parameters
+        ----------
+        body_tab : ifaces.IBodyTabWidget
+            Parent body tab that contains this page.
+        body : BodyEnum
+            Body (moon or sun) of the body_tab.
+        conn_status : ConnectionStatus
+            Connection data and status.
+        logfile : str
+            Output logfile. By default is "log.temp.out.txt".
+        kernels_path : str
+            In case that SPICE is used, the path where the kernels directory is located
+            must be specified.
+        """
         super().__init__()
         self.body_tab = body_tab
-        self.title_str = title_str + " | " + constants.BLACK_STR
+        self.body = body
+        self.title_str = "SUN"
+        if body != BodyEnum.SUN:
+            self.title_str = "MOON"
+        self.title_str = self.title_str + " | " + constants.BLACK_STR
+        self.conn_status = conn_status
+        self.logfile = logfile
+        self.kernels_path = kernels_path
         self._build_layout()
 
     def _build_layout(self):
@@ -585,7 +608,86 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.title)
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
+        # Start button
+        self.start_button = QtWidgets.QPushButton("Perform Black", alignment=QtCore.Qt.AlignCenter)
+        self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.start_button.clicked.connect(self.press_start_black)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.start_button)
+        # Logger
+        self.log_handler = LoggerDialog()
+        self.log_handlers = [self.log_handler.get_handler()]
+        self.log_handler.setVisible(False)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.log_handler)
+        # Finish content
+        add_spacer(self.content_layout, self.v_spacers)
         # Finish layout
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
+    
+    @QtCore.Slot()
+    def press_start_black(self):
+        """
+        Slot for the GUI action of pressing the start cross button.
+        """
+        self.start_button.setEnabled(False)
+        self.body_tab.set_disabled_navbar(True)
+        self.log_handler.setVisible(True)
+        self.log_handler.start_handler()
+        self.body_tab.set_enabled_close_button(False)
+        self.is_finished = aut._ContainedBool(False)
+        try:
+            cs = self.conn_status
+            altitude = 0
+            logger = get_custom_logger(self.logfile, self.log_handlers)
+            library = aut.psc.MoonLibrary.SPICEDMOON
+            if self.kernels_path is None or self.kernels_path == "":
+                library = aut.psc.MoonLibrary.EPHEM_MOON
+            self.black_thread = Thread(target=aut.black_moon, args=[cs.ip, logger, cs.port,
+                cs.password, self.is_finished, library, altitude, self.kernels_path])
+            self.black_thread.start()
+            self.start_checking_black_end()
+        except:
+            self.finished_black()
+
+    class BlackWorker(QtCore.QObject):
+        """
+        Worker that will check for the black to finish.
+        """
+        finished = QtCore.Signal()
+
+        def __init__(self, is_finished: aut._ContainedBool):
+            """
+            Parameters
+            ----------
+            is_finished : _ContainedBool
+                Contained bool that contains the info that if the black has finished.
+            """
+            super().__init__()
+            self.is_finished = is_finished
+
+        def run(self):
+            while not self.is_finished.value:
+                time.sleep(1)
+            self.finished.emit()
+
+    def start_checking_black_end(self):
+        self.th = QtCore.QThread()
+        self.worker = BodyBlackWidget.BlackWorker(self.is_finished)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.finished_black)
+        self.th.finished.connect(self.th.deleteLater)
+        self.th.start()
+    
+    def finished_black(self):
+        """Black finished/stopped. Perform the needed actions."""
+        self.body_tab.set_enabled_close_button(True)
+        self.log_handler.end_handler()
+        self.start_button.setEnabled(True)
+        self.body_tab.set_disabled_navbar(False)
+        self.body_tab.set_disabled_navbar(False)
