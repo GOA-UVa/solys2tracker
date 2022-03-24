@@ -8,7 +8,7 @@ It exports the following classes:
 """___Built-In Modules___"""
 from typing import List, Tuple
 import time
-from threading import Thread
+from threading import Thread, Lock
 import logging
 
 """___Third-Party Modules___"""
@@ -489,20 +489,22 @@ class BodyCrossWidget(QtWidgets.QWidget):
             cp = aut.CrossParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step, countdown, rest)
             altitude = self.height_input.value()
             logger = get_custom_logger(self.logfile, self.log_handlers)
+            self.mutex_cont = Lock()
+            self.cont_cross = aut._ContainedBool(True)
             if self.body == BodyEnum.SUN:
                 library = aut.psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.SunLibrary.PYSOLAR
                 self.cross_thread = Thread(target=aut.solar_cross, args=[cs.ip, logger, cp,
                     cs.port, cs.password, self.is_finished, library, altitude,
-                    self.kernels_path])
+                    self.kernels_path, self.mutex_cont, self.cont_cross])
             else:
                 library = aut.psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.MoonLibrary.EPHEM_MOON
                 self.cross_thread = Thread(target=aut.lunar_cross, args=[cs.ip, logger, cp,
                     cs.port, cs.password, self.is_finished, library, altitude,
-                    self.kernels_path])
+                    self.kernels_path, self.mutex_cont, self.cont_cross])
             self.cross_thread.start()
             self.cancel_button.setVisible(True)
             self.start_checking_cross_end()
@@ -545,15 +547,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
     def cancel_button_press(self):
         "Slot for the GUI action of pressing the cancel crossing button."
         self.cancel_button.setDisabled(True)
-        self.th = QtCore.QThread()
-        self.worker = BodyCrossWidget.CrossWorker(self.is_finished)
-        self.worker.moveToThread(self.th)
-        self.th.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.worker.finished.connect(self.finished_crossing)
-        self.th.finished.connect(self.th.deleteLater)
-        self.th.start()
+        self.mutex_cont.acquire()
+        self.cont_cross.value = False
+        self.mutex_cont.release()
     
     def finished_crossing(self):
         """Crossing finished/stopped. Perform the needed actions."""
