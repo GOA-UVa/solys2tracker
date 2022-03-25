@@ -1,6 +1,5 @@
 """___Built-In Modules___"""
 from enum import Enum
-import pickle
 from dataclasses import dataclass
 
 """___Third-Party Modules___"""
@@ -9,8 +8,12 @@ from dataclasses import dataclass
 """___Solys2Tracker Modules___"""
 try:
     from . import constants
+    from . import localdata
 except:
     import constants
+    import localdata
+
+_DEFAULT_LOGFILE = "log.temp.out.txt"
 
 @dataclass
 class ConnectionStatus:
@@ -25,6 +28,8 @@ class ConnectionStatus:
     port: int
     password: str
     is_connected: bool
+    logfile: str
+    kernels_path: str
 
     def __post_init__(self):
         if self.ip is None:
@@ -35,21 +40,33 @@ class ConnectionStatus:
             self.password = "solys"
         if self.is_connected is None:
             self.is_connected = False
+        if self.logfile is None:
+            self.logfile = self._get_logfile_data()
+            if self.logfile == "":
+                self.logfile = _DEFAULT_LOGFILE
+        if self.kernels_path is None:
+            self.kernels_path = self._get_kernels_path_data()
     
     def _get_ip_data(self) -> str:
-        try:
-            f=open(constants.DATA_FILE_PATH,"rb")
-            d=pickle.load(f)
-            f.close()
-            return d["ip"]
-        except:
-            return ""
+        return localdata.get_value("ip")
+
+    def _get_kernels_path_data(self) -> str:
+        return localdata.get_value("kernels_path")
+
+    def _get_logfile_data(self) -> str:
+        return localdata.get_value("logfile")
 
     def save_ip_data(self):
-        f = open(constants.DATA_FILE_PATH, "wb")
-        data = {"ip":self.ip}
-        pickle.dump(data, f)
-        f.close()
+        localdata.save_value("ip", self.ip)
+    
+    def save_kernels_path_data(self):
+        localdata.save_value("kernels_path", self.kernels_path)
+
+    def save_logfile_data(self):
+        localdata.save_value("logfile", self.logfile)
+
+    def set_logfolder(self, logfolder: str):
+        self.logfile = logfolder + "/" + _DEFAULT_LOGFILE
 
 class BodyEnum(Enum):
     SUN = 0

@@ -9,6 +9,7 @@ It exports the following classes:
 
 """___Built-In Modules___"""
 from typing import Tuple, List
+from enum import Enum
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -22,6 +23,7 @@ try:
     from . import noconflict
     from .common import add_spacer
     from .bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
+    from .configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget
 except:
     import constants
     import ifaces
@@ -29,6 +31,7 @@ except:
     from s2ttypes import ConnectionStatus, BodyEnum
     from common import add_spacer
     from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
+    from configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -36,33 +39,6 @@ __created__ = "2022/03/18"
 __maintainer__ = "Javier Gatón Herguedas"
 __email__ = "gaton@goa.uva.es"
 __status__ = "Development"
-
-def _try_conn(ip: str, port: int, password: str) -> Tuple[bool, str]:
-    """
-    Tries to connect to the Solys2 through the given IP and Port using the given password.
-
-    Parameters
-    ----------
-    ip : str
-        IP where the Solys2 should be.
-    port : int
-        Solys2 port at which the connection will be done.
-    password : str
-        Password used for connecting to the Solys2.
-
-    Returns
-    -------
-    is_connected : bool
-        Flag that indicates if the connection was successful. True if it was.
-    msg : str
-        Error message in case it wasn't successful, success message in case it was.
-    """
-    try:
-        solys = s2.Solys2(ip, port, password)
-        solys.close()
-    except Exception as e:
-        return False, str(e)
-    return True, constants.MSG_CONNECTED_SUCCESSFULLY
 
 class ConfigurationWidget(QtWidgets.QWidget):
     """
@@ -107,154 +83,24 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self._build_layout()
     
     def _build_layout(self):
-        self.main_layout = QtWidgets.QVBoxLayout(self)
-        self.v_spacers = []
         self.h_spacers = []
-        # Title
-        self.title = QtWidgets.QLabel("Configuration", alignment=QtCore.Qt.AlignCenter)
-        self.title.setObjectName("section_title")
-        add_spacer(self.main_layout, self.v_spacers)
-        self.main_layout.addWidget(self.title)
-        # Content
-        self.content_layout = QtWidgets.QVBoxLayout()
-        # Input
-        self.input_layout = QtWidgets.QVBoxLayout()
-        # First row (IP)
-        self.lay_ip = QtWidgets.QHBoxLayout()
-        self.ip_label = QtWidgets.QLabel("IP:", alignment=QtCore.Qt.AlignCenter)
-        self.ip_input = QtWidgets.QLineEdit(self.conn_status.ip)
-        add_spacer(self.lay_ip, self.h_spacers)
-        self.lay_ip.addWidget(self.ip_label)
-        add_spacer(self.lay_ip, self.h_spacers)
-        self.lay_ip.addWidget(self.ip_input)
-        add_spacer(self.lay_ip, self.h_spacers)
-        # Second row (Port)
-        self.lay_port = QtWidgets.QHBoxLayout()
-        self.port_label = QtWidgets.QLabel("Port:", alignment=QtCore.Qt.AlignCenter)
-        self.port_input = QtWidgets.QSpinBox()
-        self.port_input.setMaximum(1000000)
-        self.port_input.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-            self.port_input.sizePolicy().verticalPolicy()))
-        self.port_input.setValue(self.conn_status.port)
-        add_spacer(self.lay_port, self.h_spacers)
-        self.lay_port.addWidget(self.port_label)
-        add_spacer(self.lay_port, self.h_spacers)
-        self.lay_port.addWidget(self.port_input)
-        add_spacer(self.lay_port, self.h_spacers)
-        # Third row (Password)
-        self.lay_pass = QtWidgets.QHBoxLayout()
-        self.pass_label = QtWidgets.QLabel("Password:", alignment=QtCore.Qt.AlignCenter)
-        self.pass_input = QtWidgets.QLineEdit(self.conn_status.password)
-        add_spacer(self.lay_pass, self.h_spacers)
-        self.lay_pass.addWidget(self.pass_label)
-        add_spacer(self.lay_pass, self.h_spacers)
-        self.lay_pass.addWidget(self.pass_input)
-        add_spacer(self.lay_pass, self.h_spacers)
-        # Finish input
-        add_spacer(self.input_layout, self.v_spacers)
-        self.input_layout.addLayout(self.lay_ip)
-        add_spacer(self.input_layout, self.v_spacers)
-        self.input_layout.addLayout(self.lay_port)
-        add_spacer(self.input_layout, self.v_spacers)
-        self.input_layout.addLayout(self.lay_pass)
-        add_spacer(self.input_layout, self.v_spacers)
-        # Message
-        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
-        self.message_l.setObjectName("message")
-        # Connect button
-        connect_msg = "Connect"
-        if self.conn_status.is_connected:
-            connect_msg = "Reconnect"
-        self.connect_but = QtWidgets.QPushButton(connect_msg)
-        self.connect_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.connect_but.clicked.connect(self.check_connection)
-        # Finish content
-        add_spacer(self.content_layout, self.v_spacers)
-        self.content_layout.addLayout(self.input_layout)
-        add_spacer(self.content_layout, self.v_spacers)
-        self.content_layout.addWidget(self.message_l)
-        add_spacer(self.content_layout, self.v_spacers)
-        self.content_layout.addWidget(self.connect_but)
-        add_spacer(self.content_layout, self.v_spacers)
-        # Finish layout
-        add_spacer(self.main_layout, self.v_spacers)
-        self.main_layout.addLayout(self.content_layout, 1)
-        add_spacer(self.main_layout, self.v_spacers)
+        self.v_spacers = []
+        self.main_layout = QtWidgets.QHBoxLayout(self)
+        self.navbar_w = ConfigNavBarWidget(self, self.conn_status)
+        self.content_w = ConnectionWidget(self, self.conn_status)
+        add_spacer(self.main_layout, self.h_spacers)
+        self.main_layout.addWidget(self.navbar_w)
+        add_spacer(self.main_layout, self.h_spacers)
+        self.main_layout.addWidget(self.content_w, 1)
+        add_spacer(self.main_layout, self.h_spacers)
 
-    class TryConnectionWorker(QtCore.QObject):
+    def connection_changed(self):
         """
-        Worker that will perform the connection check against the Solys2
+        Function called when the connection status (self.conn_status) has changed.
+        It will update the navigation bar and the GUI.
         """
-        finished = QtCore.Signal(bool, str)
-
-        def __init__(self, ip: str, port: int, password: str):
-            """
-            Parameters
-            ----------
-            ip : str
-                Solys2 connection ip.
-            port : int
-                Solys2 connection port.
-            password : str
-                Solys2 connection password.
-            """
-            super().__init__()
-            self.ip = ip
-            self.port = port
-            self.password = password
-
-        def run(self):
-            is_connected, msg = _try_conn(self.ip, self.port, self.password)
-            self.finished.emit(is_connected, msg)
-
-    @QtCore.Slot()
-    def check_connection(self):
-        """
-        Check if the GUI can connect to the Solys2 with the inputed parameters.
-        """
-        self.connect_but.setEnabled(False)
-        ip = self.ip_input.text()
-        port = self.port_input.value()
-        password = self.pass_input.text()
-        self.conn_status.ip = ip
-        self.conn_status.port = port
-        self.conn_status.password = password
-
-        self.th = QtCore.QThread()
-        self.worker = ConfigurationWidget.TryConnectionWorker(ip, port, password)
-        self.worker.moveToThread(self.th)
-        self.th.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.worker.finished.connect(self.set_connection_result)
-        self.th.finished.connect(self.th.deleteLater)
-        self.th.start()
-
-    def set_connection_result(self, is_connected: bool, msg: str):
-        """
-        When the connection try is done, this function is called,
-        and it will do the needed actions.
-
-        Parameters
-        ----------
-        is_connected : bool
-            Flag that indicates if the connection was successful. True if it was.
-        msg : str
-            Error message in case it wasn't successful, success message in case it was.
-        """
-        self.message_l.setText(msg)
-        label_color = constants.COLOR_RED
-        connect_msg = "Connect"
-        if is_connected:
-            self.conn_status.save_ip_data()
-            label_color = constants.COLOR_GREEN
-            connect_msg = "Reconnect"
-        self.connect_but.setText(connect_msg)
-        self.message_l.setStyleSheet("background-color: {}".format(label_color))
-        self.message_l.repaint()
-        self.conn_status.is_connected = is_connected
         self.solys2_w.connection_changed()
-        self.connect_but.setEnabled(True)
+        self.navbar_w.update_button_enabling()
     
     def set_disabled_navbar(self, disabled: bool):
         """
@@ -267,6 +113,17 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """
         self.solys2_w.set_disabled_navbar(disabled)
     
+    def set_disabled_config_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all configuration sub-navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Chosen disabled status.
+        """
+        self.navbar_w.set_enabled_buttons(not disabled)
+    
     def set_enabled_close_button(self, enabled: bool):
         """
         Set the enabled status for the close button.
@@ -277,6 +134,58 @@ class ConfigurationWidget(QtWidgets.QWidget):
             Enabled status.
         """
         self.solys2_w.set_enabled_close_button(enabled)
+
+    class PageEnum(Enum):
+        """Enum representing all existing pages"""
+        CONNECTION = 0
+        SPICE = 1
+        LOG = 2
+        ADJUST = 3
+
+    def _change_tab(self, page: PageEnum):
+        """
+        Changes tab to the chosen one.
+        
+        Parameters
+        ----------
+        page : PageEnum
+            Selected page which the GUI will change to.
+        """
+        self.main_layout.removeWidget(self.content_w)
+        self.content_w.deleteLater()
+        if page == ConfigurationWidget.PageEnum.CONNECTION:
+            self.content_w = ConnectionWidget(self, self.conn_status)
+        elif page == ConfigurationWidget.PageEnum.SPICE:
+            self.content_w = SpiceWidget(self, self.conn_status)
+        elif page == ConfigurationWidget.PageEnum.LOG:
+            self.content_w = LogWidget(self, self.conn_status)
+        else:
+            self.content_w = ConnectionWidget(self, self.conn_status)
+        self.main_layout.addWidget(self.content_w, 1)
+
+    def change_tab_connection(self) -> None:
+        """
+        Change the tab to the CONNECTION tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.CONNECTION)
+
+    def change_tab_spice(self) -> None:
+        """
+        Change the tab to the SPICE tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.SPICE)
+
+    def change_tab_log(self) -> None:
+        """
+        Change the tab to the LOG tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.LOG)
+
+    def change_tab_adjust(self) -> None:
+        """
+        Change the tab to the ADJUST tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.ADJUST)
 
 class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
@@ -319,11 +228,14 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         self.page_w.deleteLater()
         body = BodyEnum.SUN
         if option == self.menu_options[0]:
-            self.page_w = BodyTrackWidget(self, body, self.conn_status)
+            self.page_w = BodyTrackWidget(self, body, self.conn_status,
+                self.conn_status.logfile, self.conn_status.kernels_path)
         elif option == self.menu_options[1]:
-            self.page_w = BodyCrossWidget(self, body, self.conn_status)
+            self.page_w = BodyCrossWidget(self, body, self.conn_status,
+                self.conn_status.logfile, self.conn_status.kernels_path)
         else:
-            self.page_w = BodyCrossWidget(self, body, self.conn_status, is_mesh = True)
+            self.page_w = BodyCrossWidget(self, body, self.conn_status, 
+                self.conn_status.logfile, self.conn_status.kernels_path, is_mesh = True)
         self.main_layout.addWidget(self.page_w)
     
     def set_disabled_navbar(self, disabled: bool):

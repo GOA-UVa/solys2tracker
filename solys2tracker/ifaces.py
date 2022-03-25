@@ -130,3 +130,77 @@ class IBodyTabWidget(ABC):
             Enabled status.
         """
         pass
+
+class IConfigWidget(ABC):
+    
+    @abstractmethod
+    def connection_changed(self):
+        """
+        Function called when the connection status (self.conn_status) has changed.
+        It will update the navigation bar and the GUI.
+        """
+        pass
+
+    @abstractmethod
+    def set_disabled_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Chosen disabled status.
+        """
+        pass
+
+    @abstractmethod
+    def set_disabled_config_navbar(self, disabled: bool):
+        """
+        Set the disabled status for all configuration sub-navbar buttons.
+
+        Parameters
+        ----------
+        disabled : bool
+            Chosen disabled status.
+        """
+        pass
+
+    @abstractmethod
+    def set_enabled_close_button(self, enabled: bool):
+        """
+        Set the enabled status for the close button.
+
+        Parameters
+        ----------
+        enabled : bool
+            Enabled status.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_connection(self) -> None:
+        """
+        Change the tab to the CONNECTION tab.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_spice(self) -> None:
+        """
+        Change the tab to the SPICE tab.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_log(self) -> None:
+        """
+        Change the tab to the LOG tab.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_adjust(self) -> None:
+        """
+        Change the tab to the ADJUST tab.
+        """
+        pass
