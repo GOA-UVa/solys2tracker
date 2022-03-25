@@ -3,6 +3,8 @@ This module contains the main tabs that will be present in the application.
 
 It exports the following classes:
     * ConfigurationWidget: The Configuration Tab.
+    * SunTabWidget: The Sun Tab.
+    * MoonTabWidget: The Moon Tab.
 """
 
 """___Built-In Modules___"""
@@ -294,11 +296,12 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         self.conn_status = conn_status
         self.title_str = "SUN"
         self.menu_options = ["Track", "Cross", "Mesh"]
+        self.description_str = "PUT ON THE FILTER!"
         self._build_layout()
     
     def _build_layout(self):
         self.main_layout = QtWidgets.QVBoxLayout(self)
-        self.page_w = BodyMenuWidget(self, self.title_str, self.menu_options)
+        self.page_w = BodyMenuWidget(self, self.title_str, self.menu_options, self.description_str)
         self.main_layout.addWidget(self.page_w)
 
     def change_to_view(self, option: str) -> None:
@@ -374,11 +377,12 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         self.conn_status = conn_status
         self.title_str = "MOON"
         self.menu_options = ["Track", "Cross", "Mesh", "Black"]
+        self.description_str = "TAKE OFF THE FILTER"
         self._build_layout()
     
     def _build_layout(self):
         self.main_layout = QtWidgets.QVBoxLayout(self)
-        self.page_w = BodyMenuWidget(self, self.title_str, self.menu_options)
+        self.page_w = BodyMenuWidget(self, self.title_str, self.menu_options, self.description_str)
         self.main_layout.addWidget(self.page_w)
 
     def change_to_view(self, option: str) -> None:

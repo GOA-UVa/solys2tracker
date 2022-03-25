@@ -1,8 +1,12 @@
 """
-This module contains the main tabs that will be present in the application.
+This module contains the pages widgets that will be present in each body tab.
 
 It exports the following classes:
-    * ConfigurationWidget: The Configuration Tab.
+    * BodyMenuWidget: Body page representing the menu, which will contain the available
+        options for the user.
+    * BodyTrackWidget Body page that contains the tracking functionality.
+    * BodyCrossWidget: Body page that contains the cross and mesh functionalities.
+    * BodyBlackWidget: Body page that contains the black moon functionality.
 """
 
 """___Built-In Modules___"""
@@ -41,7 +45,7 @@ class BodyMenuWidget(QtWidgets.QWidget):
     """
     Body page representing the menu, which will contain the available options for the user.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str, options: List[str]):
+    def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str, options: List[str], description_str: str):
         """
         Parameters
         ----------
@@ -51,10 +55,13 @@ class BodyMenuWidget(QtWidgets.QWidget):
             Title string that will be shown
         options : list of str
             Options that the menu tab will have
+        description_str : str
+            Description string that will be shown
         """
         super().__init__()
         self.body_tab = body_tab
         self.title_str = title_str
+        self.description_str = description_str
         self.options = options
         self._build_layout()
     
@@ -73,6 +80,11 @@ class BodyMenuWidget(QtWidgets.QWidget):
         self.title.setObjectName("section_title")
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.title)
+        # Description
+        self.title = QtWidgets.QLabel(self.description_str, alignment=QtCore.Qt.AlignCenter)
+        self.title.setObjectName("section_description")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.description_str)
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
         self.buttons = []
@@ -277,6 +289,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.body_tab.set_disabled_navbar(False)
 
 class BodyCrossWidget(QtWidgets.QWidget):
+    """
+    Body page that contains the cross and mesh functionalities.
+    """
     def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
         logfile: str = "log.temp.out.txt", kernels_path: str = "", is_mesh: bool = False):
         """
@@ -577,6 +592,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.body_tab.set_disabled_navbar(False)
 
 class BodyBlackWidget(QtWidgets.QWidget):
+    """
+    Body page that contains the black moon functionality.
+    """
     def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
         logfile: str = "log.temp.out.txt", kernels_path: str = ""):
         """
