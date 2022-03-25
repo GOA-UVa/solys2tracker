@@ -278,7 +278,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
 
 class BodyCrossWidget(QtWidgets.QWidget):
     def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
-        logfile: str = "log.temp.out.txt", kernels_path: str = ""):
+        logfile: str = "log.temp.out.txt", kernels_path: str = "", is_mesh: bool = False):
         """
         Parameters
         ----------
@@ -293,14 +293,20 @@ class BodyCrossWidget(QtWidgets.QWidget):
         kernels_path : str
             In case that SPICE is used, the path where the kernels directory is located
             must be specified.
+        is_mesh : bool
+            Flag that indicates that the operation should be a mesh instead of a cross.
         """
         super().__init__()
         self.body_tab = body_tab
         self.body = body
         self.title_str = "SUN"
+        self.is_mesh = is_mesh
         if body != BodyEnum.SUN:
             self.title_str = "MOON"
-        self.title_str = self.title_str + " | " + constants.CROSS_STR
+        self.op_name = constants.CROSS_STR
+        if is_mesh:
+            self.op_name = constants.MESH_STR
+        self.title_str = self.title_str + " | " + self.op_name
         self.conn_status = conn_status
         self.logfile = logfile
         self.kernels_path = kernels_path
@@ -430,7 +436,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handlers += [self.log_handler.get_handler()]
         self.log_handler.setVisible(False)
         # Start button
-        self.start_button = QtWidgets.QPushButton("Start Cross")
+        self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.start_button.clicked.connect(self.press_start_cross)
         # Cancel button
@@ -464,7 +470,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def press_start_cross(self):
         """
-        Slot for the GUI action of pressing the start cross button.
+        Slot for the GUI action of pressing the start cross/mesh button.
         """
         self.start_button.setEnabled(False)
         self.body_tab.set_disabled_navbar(True)
@@ -495,16 +501,19 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 library = aut.psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.SunLibrary.PYSOLAR
-                self.cross_thread = Thread(target=aut.solar_cross, args=[cs.ip, logger, cp,
-                    cs.port, cs.password, self.is_finished, library, altitude,
-                    self.kernels_path, self.mutex_cont, self.cont_cross])
+                func = aut.solar_cross
+                if self.is_mesh:
+                    func = aut.solar_mesh
             else:
                 library = aut.psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.MoonLibrary.EPHEM_MOON
-                self.cross_thread = Thread(target=aut.lunar_cross, args=[cs.ip, logger, cp,
-                    cs.port, cs.password, self.is_finished, library, altitude,
-                    self.kernels_path, self.mutex_cont, self.cont_cross])
+                func = aut.lunar_cross
+                if self.is_mesh:
+                    func = aut.lunar_mesh
+            self.cross_thread = Thread(target=func, args=[cs.ip, logger, cp,
+                cs.port, cs.password, self.is_finished, library, altitude,
+                self.kernels_path, self.mutex_cont, self.cont_cross])
             self.cross_thread.start()
             self.cancel_button.setVisible(True)
             self.start_checking_cross_end()

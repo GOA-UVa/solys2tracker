@@ -293,7 +293,7 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         self.solys2_w = solys2_w
         self.conn_status = conn_status
         self.title_str = "SUN"
-        self.menu_options = ["Track", "Cross"]
+        self.menu_options = ["Track", "Cross", "Mesh"]
         self._build_layout()
     
     def _build_layout(self):
@@ -317,8 +317,10 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         body = BodyEnum.SUN
         if option == self.menu_options[0]:
             self.page_w = BodyTrackWidget(self, body, self.conn_status)
-        else:
+        elif option == self.menu_options[1]:
             self.page_w = BodyCrossWidget(self, body, self.conn_status)
+        else:
+            self.page_w = BodyCrossWidget(self, body, self.conn_status, is_mesh = True)
         self.main_layout.addWidget(self.page_w)
     
     def set_disabled_navbar(self, disabled: bool):
@@ -371,7 +373,7 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         self.solys2_w = solys2_w
         self.conn_status = conn_status
         self.title_str = "MOON"
-        self.menu_options = ["Track", "Cross", "Black"]
+        self.menu_options = ["Track", "Cross", "Mesh", "Black"]
         self._build_layout()
     
     def _build_layout(self):
@@ -397,6 +399,8 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
             self.page_w = BodyTrackWidget(self, body, self.conn_status)
         elif option == self.menu_options[1]:
             self.page_w = BodyCrossWidget(self, body, self.conn_status)
+        elif option == self.menu_options[2]:
+            self.page_w = BodyCrossWidget(self, body, self.conn_status, is_mesh = True)
         else:
             self.page_w = BodyBlackWidget(self, body, self.conn_status)
         self.main_layout.addWidget(self.page_w)
