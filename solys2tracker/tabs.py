@@ -23,7 +23,8 @@ try:
     from . import noconflict
     from .common import add_spacer
     from .bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
-    from .configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget
+    from .configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
+        AdjustWidget
 except:
     import constants
     import ifaces
@@ -31,7 +32,8 @@ except:
     from s2ttypes import ConnectionStatus, BodyEnum
     from common import add_spacer
     from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
-    from configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget
+    from configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
+        AdjustWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -160,7 +162,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
         elif page == ConfigurationWidget.PageEnum.LOG:
             self.content_w = LogWidget(self, self.conn_status)
         else:
-            self.content_w = ConnectionWidget(self, self.conn_status)
+            self.content_w = AdjustWidget(self, self.conn_status)
         self.main_layout.addWidget(self.content_w, 1)
 
     def change_tab_connection(self) -> None:

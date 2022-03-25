@@ -6,6 +6,7 @@ It exports the following classes:
 """
 
 """___Built-In Modules___"""
+from ctypes import alignment
 from typing import Tuple
 
 """___Third-Party Modules___"""
@@ -452,3 +453,210 @@ class LogWidget(QtWidgets.QWidget):
     def save_directory(self):
         self.conn_status.set_logfolder(self.log_folder)
         self.conn_status.save_logfile_data()
+
+class AdjustWidget(QtWidgets.QWidget):
+    def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
+        """
+        Parameters
+        ----------
+        config_w : IConfigWidget
+            Parent widget that contains the configuration page.
+        conn_status : ConnectionStatus
+            Current status of the GUI connection with the Solys2.
+        """
+        super().__init__()
+        self.title_str = "Configuration | Adjust"
+        self.config_w = config_w
+        self.conn_status = conn_status
+        self._build_layout()
+        self.update_adjustment_labels()
+    
+    def _build_layout(self):
+        self.v_spacers = []
+        self.h_spacers = []
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        # Title
+        self.title = QtWidgets.QLabel(self.title_str, alignment=QtCore.Qt.AlignCenter)
+        self.title.setObjectName("section_title")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.title)
+        # Current adjustment
+        self.adjust_layout = QtWidgets.QHBoxLayout()
+        self.az_label = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
+        self.az_curr_adjustment = QtWidgets.QLabel("?", alignment=QtCore.Qt.AlignLeft)
+        self.ze_label = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
+        self.ze_curr_adjustment = QtWidgets.QLabel("?", alignment=QtCore.Qt.AlignLeft)
+        add_spacer(self.adjust_layout, self.h_spacers)
+        self.adjust_layout.addWidget(self.az_label, 1)
+        add_spacer(self.adjust_layout, self.h_spacers)
+        self.adjust_layout.addWidget(self.az_curr_adjustment, 1)
+        add_spacer(self.adjust_layout, self.h_spacers)
+        self.adjust_layout.addWidget(self.ze_label, 1)
+        add_spacer(self.adjust_layout, self.h_spacers)
+        self.adjust_layout.addWidget(self.ze_curr_adjustment, 1)
+        add_spacer(self.adjust_layout, self.h_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.adjust_layout)
+        # Input
+        # Input title
+        self.input_title = QtWidgets.QLabel("Add adjustments", alignment=QtCore.Qt.AlignCenter)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.input_title)
+        # Input fields
+        self.input_layout = QtWidgets.QHBoxLayout()
+        self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
+        self.az_extra_adjustment = QtWidgets.QDoubleSpinBox()
+        self.az_extra_adjustment.setMinimum(-0.2)
+        self.az_extra_adjustment.setMaximum(0.2)
+        self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
+        self.ze_extra_adjustment = QtWidgets.QDoubleSpinBox()
+        self.ze_extra_adjustment.setMinimum(-0.2)
+        self.ze_extra_adjustment.setMaximum(0.2)
+        add_spacer(self.adjust_layout, self.h_spacers)
+        self.input_layout.addWidget(self.az_label_input, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        self.input_layout.addWidget(self.az_extra_adjustment, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        self.input_layout.addWidget(self.ze_label_input, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        self.input_layout.addWidget(self.ze_extra_adjustment, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.input_layout)
+        # Adjust button
+        self.save_button = QtWidgets.QPushButton("Adjust")
+        self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.save_button.clicked.connect(self.adjust)
+        self.main_layout.addWidget(self.save_button)
+        add_spacer(self.main_layout, self.v_spacers)
+        # Error message
+        self.err_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.main_layout.addWidget(self.err_label)
+        add_spacer(self.main_layout, self.v_spacers)
+
+    class AdjustWorker(QtCore.QObject):
+        """
+        Worker that will obtain the adjustment from the Solys2
+        """
+        finished = QtCore.Signal()
+        success = QtCore.Signal(float, float)
+        error = QtCore.Signal(str)
+
+        def __init__(self, ip: str, port: int, password: str):
+            """
+            Parameters
+            ----------
+            ip : str
+                Solys2 connection ip.
+            port : int
+                Solys2 connection port.
+            password : str
+                Solys2 connection password.
+            """
+            super().__init__()
+            self.ip = ip
+            self.port = port
+            self.password = password
+
+        def run(self):
+            try:
+                solys = s2.Solys2(self.ip, self.port, self.password)
+                az, ze, _ = solys.adjust()
+                self.success.emit(az, ze)
+            except Exception as e:
+                self.error.emit(str(e))
+            finally:
+                self.finished.emit()
+
+    def update_adjustment_labels(self):
+        self.err_label.setText("")
+        self.th = QtCore.QThread()
+        cs = self.conn_status
+        self.worker = AdjustWidget.AdjustWorker(cs.ip, cs.port, cs.password)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.error.connect(self.show_error)
+        self.worker.success.connect(self._update_adjustment_labels)
+        self.worker.finished.connect(self.thread_finished)
+        self.th.finished.connect(self.th.deleteLater)
+        self.thread_started()
+        self.th.start()
+
+    def _update_adjustment_labels(self, az: float, ze: float):
+        self.az_curr_adjustment.setText(az)
+        self.ze_curr_adjustment.setText(ze)
+    
+    def thread_finished(self):
+        self.az_extra_adjustment.setDisabled(False)
+        self.ze_extra_adjustment.setDisabled(False)
+        self.save_button.setDisabled(False)
+        self.config_w.set_disabled_config_navbar(False)
+        self.config_w.set_disabled_navbar(False)
+
+    def thread_started(self):
+        self.az_extra_adjustment.setDisabled(True)
+        self.ze_extra_adjustment.setDisabled(True)
+        self.save_button.setDisabled(True)
+        self.config_w.set_disabled_config_navbar(True)
+        self.config_w.set_disabled_navbar(True)
+
+    class SendAdjustWorker(QtCore.QObject):
+        """
+        Worker that will send the adjustment from the Solys2
+        """
+        finished = QtCore.Signal()
+        success = QtCore.Signal()
+        error = QtCore.Signal(str)
+
+        def __init__(self, ip: str, port: int, password: str, az: float, ze: float):
+            """
+            Parameters
+            ----------
+            ip : str
+                Solys2 connection ip.
+            port : int
+                Solys2 connection port.
+            password : str
+                Solys2 connection password.
+            """
+            super().__init__()
+            self.ip = ip
+            self.port = port
+            self.password = password
+            self.az = az
+            self.ze = ze
+
+        def run(self):
+            try:
+                solys = s2.Solys2(self.ip, self.port, self.password)
+                solys.adjust_azimuth(self.az)
+                solys.adjust_zenith(self.ze)
+                self.success.emit()
+            except Exception as e:
+                self.error.emit(str(e))
+            finally:
+                self.finished.emit()
+
+    @QtCore.Slot()
+    def adjust(self):
+        self.err_label.setText("")
+        self.th = QtCore.QThread()
+        cs = self.conn_status
+        az = self.az_extra_adjustment.value()
+        ze = self.ze_extra_adjustment.value()
+        self.worker = AdjustWidget.SendAdjustWorker(cs.ip, cs.port, cs.password, az, ze)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.error.connect(self.show_error)
+        self.worker.success.connect(self.update_adjustment_labels)
+        self.worker.finished.connect(self.thread_finished)
+        self.th.finished.connect(self.th.deleteLater)
+        self.thread_started()
+        self.th.start()
+
+    def show_error(self, msg: str):
+        self.err_label.setText("Error: {}".format(msg))
