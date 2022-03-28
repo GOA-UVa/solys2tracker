@@ -15,17 +15,15 @@ from solys2 import solys2 as s2
 
 """___Solys2Tracker Modules___"""
 try:
-    from .s2ttypes import ConnectionStatus
-    from . import constants
-    from . import ifaces
-    from .common import add_spacer
-    from . import localdata
+    from solys2tracker.s2ttypes import ConnectionStatus
+    from solys2tracker import constants
+    from solys2tracker import ifaces
+    from solys2tracker.common import add_spacer
 except:
     import constants
     import ifaces
     from s2ttypes import ConnectionStatus
     from common import add_spacer
-    import localdata
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'

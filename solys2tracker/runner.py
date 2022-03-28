@@ -16,11 +16,11 @@ from PySide2 import QtWidgets, QtCore, QtGui
 
 """___Solys2Tracker Modules___"""
 try:
-    from . import constants
-    from . import ifaces
-    from . import noconflict
-    from .tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
-    from .s2ttypes import ConnectionStatus
+    from solys2tracker import constants
+    from solys2tracker import ifaces
+    from solys2tracker import noconflict
+    from solys2tracker.tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
+    from solys2tracker.s2ttypes import ConnectionStatus
 except:
     import constants
     import ifaces

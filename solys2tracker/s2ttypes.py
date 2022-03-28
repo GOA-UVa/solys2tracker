@@ -7,10 +7,8 @@ from dataclasses import dataclass
 
 """___Solys2Tracker Modules___"""
 try:
-    from . import constants
-    from . import localdata
+    from solys2tracker import localdata
 except:
-    import constants
     import localdata
 
 _DEFAULT_LOGFILE = "log.temp.out.txt"

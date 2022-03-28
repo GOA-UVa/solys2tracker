@@ -22,15 +22,13 @@ from solys2 import autotrack as aut
 
 """___Solys2Tracker Modules___"""
 try:
-    from .s2ttypes import ConnectionStatus, BodyEnum
-    from . import constants
-    from . import ifaces
-    from . import noconflict
-    from .common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
+    from solys2tracker.s2ttypes import ConnectionStatus, BodyEnum
+    from solys2tracker import constants
+    from solys2tracker import ifaces
+    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
 except:
     import constants
     import ifaces
-    import noconflict
     from s2ttypes import ConnectionStatus, BodyEnum
     from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
 

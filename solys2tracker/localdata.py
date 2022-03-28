@@ -7,7 +7,7 @@ from typing import Dict
 
 """___Solys2Tracker Modules___"""
 try:
-    from . import constants
+    from solys2tracker import constants
 except:
     import constants
 
