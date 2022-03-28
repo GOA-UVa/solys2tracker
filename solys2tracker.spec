@@ -14,8 +14,8 @@ if sys.platform == 'linux':
         ('.venv/lib/python3.8/site-packages/spiceypy/utils/libcspice.so', './spiceypy/utils')
     ]
     a_datas = [
-        ('solys2tracker/style.qss', '.')#,
-        #('./solys2tracker/assets/icon.png', './solys2tracker/assets')
+        ('solys2tracker/style.qss', '.'),
+        ('./solys2tracker/assets/icon.png', './solys2tracker/assets')
     ]
 
 a = Analysis(['solys2tracker/runner.py'],
@@ -35,7 +35,7 @@ a = Analysis(['solys2tracker/runner.py'],
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
-#a.datas += [('./assets/icon.png', './assets/icon.png', 'DATA')]
+a.datas += [('./solys2tracker/assets/icon.png', './solys2tracker/assets/icon.png', 'DATA')]
 
 if sys.platform == 'win32' or sys.platform == 'win64' or sys.platform == 'linux':
     exe = EXE(pyz,
@@ -52,7 +52,7 @@ if sys.platform == 'win32' or sys.platform == 'win64' or sys.platform == 'linux'
             upx_exclude=[],
             runtime_tmpdir=None,
             console=False,
-            icon=None,#'solys2tracker/assets/icon.ico',
+            icon='solys2tracker/assets/icon.ico',
             disable_windowed_traceback=False,
             target_arch=None,
             codesign_identity=None,
