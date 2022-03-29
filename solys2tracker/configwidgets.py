@@ -583,8 +583,8 @@ class AdjustWidget(QtWidgets.QWidget):
         self.th.start()
 
     def _update_adjustment_labels(self, az: float, ze: float):
-        self.az_curr_adjustment.setText(az)
-        self.ze_curr_adjustment.setText(ze)
+        self.az_curr_adjustment.setText(str(az))
+        self.ze_curr_adjustment.setText(str(ze))
     
     def thread_finished(self):
         self.az_extra_adjustment.setDisabled(False)
@@ -640,21 +640,21 @@ class AdjustWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def adjust(self):
         self.err_label.setText("")
-        self.th = QtCore.QThread()
+        self.th_send_adj = QtCore.QThread()
         cs = self.conn_status
         az = self.az_extra_adjustment.value()
         ze = self.ze_extra_adjustment.value()
         self.worker = AdjustWidget.SendAdjustWorker(cs.ip, cs.port, cs.password, az, ze)
-        self.worker.moveToThread(self.th)
-        self.th.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th.quit)
+        self.worker.moveToThread(self.th_send_adj)
+        self.th_send_adj.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th_send_adj.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker.error.connect(self.show_error)
         self.worker.success.connect(self.update_adjustment_labels)
         self.worker.finished.connect(self.thread_finished)
-        self.th.finished.connect(self.th.deleteLater)
+        self.th_send_adj.finished.connect(self.th_send_adj.deleteLater)
         self.thread_started()
-        self.th.start()
+        self.th_send_adj.start()
 
     def show_error(self, msg: str):
         self.err_label.setText("Error: {}".format(msg))

@@ -79,10 +79,10 @@ class BodyMenuWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.title)
         # Description
-        self.title = QtWidgets.QLabel(self.description_str, alignment=QtCore.Qt.AlignCenter)
-        self.title.setObjectName("section_description")
+        self.description = QtWidgets.QLabel(self.description_str, alignment=QtCore.Qt.AlignCenter)
+        self.description.setObjectName("section_description")
         add_spacer(self.main_layout, self.v_spacers)
-        self.main_layout.addWidget(self.description_str)
+        self.main_layout.addWidget(self.description)
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
         self.buttons = []
@@ -634,7 +634,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
         # Start button
-        self.start_button = QtWidgets.QPushButton("Perform Black", alignment=QtCore.Qt.AlignCenter)
+        self.start_button = QtWidgets.QPushButton("Perform Black")
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.start_button.clicked.connect(self.press_start_black)
         add_spacer(self.content_layout, self.v_spacers)
