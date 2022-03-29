@@ -203,7 +203,7 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         super().__init__()
         self.solys2_w = solys2_w
         self.conn_status = conn_status
-        self.title_str = "SUN"
+        self.title_str = "SUN ☼"
         self.menu_options = ["Track", "Cross", "Mesh"]
         self.description_str = "PUT ON THE FILTER!"
         self._build_layout()
@@ -287,7 +287,7 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         super().__init__()
         self.solys2_w = solys2_w
         self.conn_status = conn_status
-        self.title_str = "MOON"
+        self.title_str = "MOON ☾"
         self.menu_options = ["Track", "Cross", "Mesh", "Black"]
         self.description_str = "TAKE OFF THE FILTER"
         self._build_layout()

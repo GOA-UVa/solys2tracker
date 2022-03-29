@@ -47,10 +47,10 @@ class NavBarWidget(QtWidgets.QWidget):
 
     def _build_layout(self):
         super().__init__()
-        self.sun_but = QtWidgets.QPushButton("SUN")
+        self.sun_but = QtWidgets.QPushButton("SUN ☼")
         self.sun_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.sun_but.clicked.connect(self.press_sun)
-        self.moon_but = QtWidgets.QPushButton("MOON")
+        self.moon_but = QtWidgets.QPushButton("MOON ☾")
         self.moon_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.moon_but.clicked.connect(self.press_moon)
         self.conf_but = QtWidgets.QPushButton("CONF")

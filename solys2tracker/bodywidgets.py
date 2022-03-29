@@ -64,7 +64,7 @@ class BodyMenuWidget(QtWidgets.QWidget):
         self._build_layout()
     
     def _assign_button(self, option):
-        but = QtWidgets.QPushButton(option)
+        but = QtWidgets.QPushButton(option.upper())
         but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         but.clicked.connect(lambda: self.button_press(option))
         return but
@@ -88,6 +88,7 @@ class BodyMenuWidget(QtWidgets.QWidget):
         self.buttons = []
         for option in self.options:
             but = self._assign_button(option)
+            but.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
             add_spacer(self.content_layout, self.v_spacers)
             self.content_layout.addWidget(but)
             self.buttons.append(but)
@@ -157,7 +158,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.input_layout = QtWidgets.QVBoxLayout()
         # Seconds
         self.seconds_layout = QtWidgets.QHBoxLayout()
-        self.seconds_label = QtWidgets.QLabel("Seconds:")
+        self.seconds_label = QtWidgets.QLabel("Seconds:", alignment=QtCore.Qt.AlignCenter)
         self.seconds_input = QtWidgets.QDoubleSpinBox()
         self.seconds_input.setMinimum(1)
         self.seconds_input.setMaximum(10000)
@@ -169,7 +170,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         add_spacer(self.seconds_layout, self.h_spacers)
         # Altitude
         self.altitude_layout = QtWidgets.QHBoxLayout()
-        self.altitude_label = QtWidgets.QLabel("Height:")
+        self.altitude_label = QtWidgets.QLabel("Height:", alignment=QtCore.Qt.AlignCenter)
         self.altitude_input = QtWidgets.QDoubleSpinBox()
         self.altitude_input.setMaximum(1000000)
         add_spacer(self.altitude_layout, self.h_spacers)
