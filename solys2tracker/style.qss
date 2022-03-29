@@ -1,0 +1,19 @@
+#section_title {
+    font-size: 15px;
+    font-weight: bold;
+}
+#table_title {
+    font-weight: bold;
+}
+#message {
+    color: white;
+}
+#countdown {
+    font-size: 25px;
+    font-weight: bold;
+    color: red;
+}
+#section_description {
+    font-weight: bold;
+    color: red;
+}
