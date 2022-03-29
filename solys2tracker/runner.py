@@ -6,10 +6,10 @@ This module starts the Solys2Tracker GUI when executed.
 
 """___Built-In Modules___"""
 from enum import Enum
-from typing import Union
+from typing import Union, List
 from pathlib import Path
 import sys
-from os import path as os_path
+from os import path as os_path, system as os_system, getpid as os_getpid, kill as os_kill
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -205,18 +205,73 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         """
         self._change_tab(Solys2Widget.TabEnum.CONF)
 
+class CloseConfirmationWidget(QtWidgets.QWidget):
+    """Widget for the subwindow of close confirmation"""
+    def __init__(self, main_win: 'MainWindow'):
+        super().__init__()
+        self.main_win = main_win
+        self._build_layout()
+    
+    def _build_layout(self):
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        # Title
+        self.title = QtWidgets.QLabel("Do you really want to close?")
+        self.main_layout.addWidget(self.title)
+        # Buttons
+        self.but_layout = QtWidgets.QHBoxLayout()
+        # Cancel button
+        self.but_cancel = QtWidgets.QPushButton("Cancel")
+        self.but_cancel.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.but_cancel.clicked.connect(self.press_cancel)
+        # Close button
+        self.but_close = QtWidgets.QPushButton("Close")
+        self.but_close.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.but_close.clicked.connect(self.press_close)
+        self.but_layout.addWidget(self.but_cancel)
+        self.but_layout.addWidget(self.but_close)
+        self.main_layout.addLayout(self.but_layout)
+    
+    @QtCore.Slot()
+    def press_cancel(self):
+        self.close()
+        self.window().close()
+    
+    @QtCore.Slot()
+    def press_close(self):
+        self.main_win.confirmed_close()
+
 class MainWindow(QtWidgets.QMainWindow):
     """Main window that will contain the main widget."""
+
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
+        super().__init__(parent)
+        self.dialogs: List[QtWidgets.QMainWindow] = []
+
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Overwriting of the closeEvent.
-        It tells the Solys2Widget to close the results windows, and then it calls super() closeEvent.
+        Checks if the Solys2Widget is doing a critical activity.
+        If not, it closes the window. Otherwise it asks the user for confirmation.
         """
         solys2_w: Solys2Widget = self.centralWidget()
-        #solys2_w.close_results()
+        for dialog in self.dialogs:
+            dialog.close()
+        self.dialogs = []
         if solys2_w.can_close:
             return super().closeEvent(event)
+        close_win = QtWidgets.QMainWindow(self)
+        close_widget = CloseConfirmationWidget(self)
+        close_win.setCentralWidget(close_widget)
+        close_win.show()
+        self.dialogs.append(close_win)
         event.ignore()
-        self.setWindowState(QtCore.Qt.WindowMinimized)
+    
+    def confirmed_close(self) -> None:
+        """Closes completely the program"""
+        solys2_w: Solys2Widget = self.centralWidget()
+        solys2_w.can_close = True
+        self.close()
+        QtCore.QCoreApplication.quit()
+        os_kill(os_getpid(), 9)
 
 def filepathToStr(filepath: str) -> str:
     """Given filepath it returns its contents as a string
