@@ -1,6 +1,6 @@
 # solys2tracker
 
-![Version 0.1.0-beta](https://img.shields.io/badge/version-0.1.0--beta-informational)
+![Version 0.1.0-beta2](https://img.shields.io/badge/version-0.1.0--beta2-informational)
 
 Desktop app for automating the Solys2.
 
