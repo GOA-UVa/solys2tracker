@@ -341,27 +341,33 @@ class SpiceWidget(QtWidgets.QWidget):
         self.select_btn = QtWidgets.QPushButton("Select folder")
         self.select_btn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.select_btn.clicked.connect(self.open_file_dialog)
-        self.kernels_path = self.conn_status.kernels_path
-        self.dir_str = self.kernels_path
-        if self.dir_str == "":
-            self.dir_str = "No directory selected"
-        self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
         add_spacer(self.input_layout, self.h_spacers)
         self.input_layout.addWidget(self.select_label)
         add_spacer(self.input_layout, self.h_spacers)
         self.input_layout.addWidget(self.select_btn)
         add_spacer(self.input_layout, self.h_spacers)
-        self.input_layout.addWidget(self.selected_label)
-        add_spacer(self.input_layout, self.h_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.input_layout)
+        # Selected directory
+        self.kernels_path = self.conn_status.kernels_path
+        self.dir_str = self.kernels_path
+        if self.dir_str == "":
+            self.dir_str = "No directory selected"
+        self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.selected_label)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.message_l)
         # Save button
         self.save_button = QtWidgets.QPushButton("Save")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.save_directory)
-        # Finish main layout
-        add_spacer(self.main_layout, self.v_spacers)
-        self.main_layout.addLayout(self.input_layout)
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.save_button)
+        # Finish main layout
         add_spacer(self.main_layout, self.v_spacers)
 
     @QtCore.Slot()
@@ -376,7 +382,18 @@ class SpiceWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def save_directory(self):
         self.conn_status.kernels_path = self.kernels_path
-        self.conn_status.save_kernels_path_data()
+        try:
+            self.conn_status.save_kernels_path_data()
+        except:
+            msg = "Error saving the kernels directory data"
+            label_color = constants.COLOR_RED
+        else:
+            msg = "Saved successfully"
+            label_color = constants.COLOR_GREEN
+        finally:
+            self.message_l.setText(msg)
+            self.message_l.setStyleSheet("background-color: {}".format(label_color))
+            self.message_l.repaint()
 
 class LogWidget(QtWidgets.QWidget):
     def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
@@ -419,23 +436,30 @@ class LogWidget(QtWidgets.QWidget):
         self.dir_str = self.log_folder
         if self.dir_str == "":
             self.dir_str = "No directory selected"
+        elif self.dir_str == ".":
+            self.dir_str = "Using current execution directory"
         self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
         add_spacer(self.input_layout, self.h_spacers)
         self.input_layout.addWidget(self.select_label)
         add_spacer(self.input_layout, self.h_spacers)
         self.input_layout.addWidget(self.select_btn)
         add_spacer(self.input_layout, self.h_spacers)
-        self.input_layout.addWidget(self.selected_label)
-        add_spacer(self.input_layout, self.h_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.input_layout)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.selected_label)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.message_l)
         # Save button
         self.save_button = QtWidgets.QPushButton("Save")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.save_directory)
-        # Finish main layout
-        add_spacer(self.main_layout, self.v_spacers)
-        self.main_layout.addLayout(self.input_layout)
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.save_button)
+        # Finish main layout
         add_spacer(self.main_layout, self.v_spacers)
 
     @QtCore.Slot()
@@ -450,7 +474,18 @@ class LogWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def save_directory(self):
         self.conn_status.set_logfolder(self.log_folder)
-        self.conn_status.save_logfile_data()
+        try:
+            self.conn_status.save_logfile_data()
+        except:
+            msg = "Error saving the logging directory data"
+            label_color = constants.COLOR_RED
+        else:
+            msg = "Saved successfully"
+            label_color = constants.COLOR_GREEN
+        finally:
+            self.message_l.setText(msg)
+            self.message_l.setStyleSheet("background-color: {}".format(label_color))
+            self.message_l.repaint()
 
 class AdjustWidget(QtWidgets.QWidget):
     def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
@@ -521,15 +556,17 @@ class AdjustWidget(QtWidgets.QWidget):
         add_spacer(self.input_layout, self.h_spacers)
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.input_layout)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.message_l)
         # Adjust button
         self.save_button = QtWidgets.QPushButton("Adjust")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.adjust)
-        self.main_layout.addWidget(self.save_button)
         add_spacer(self.main_layout, self.v_spacers)
-        # Error message
-        self.err_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
-        self.main_layout.addWidget(self.err_label)
+        self.main_layout.addWidget(self.save_button)
         add_spacer(self.main_layout, self.v_spacers)
 
     class AdjustWorker(QtCore.QObject):
@@ -567,7 +604,6 @@ class AdjustWidget(QtWidgets.QWidget):
                 self.finished.emit()
 
     def update_adjustment_labels(self):
-        self.err_label.setText("")
         self.th = QtCore.QThread()
         cs = self.conn_status
         self.worker = AdjustWidget.AdjustWorker(cs.ip, cs.port, cs.password)
@@ -637,9 +673,13 @@ class AdjustWidget(QtWidgets.QWidget):
             finally:
                 self.finished.emit()
 
+    def success_adjusting_solys2(self):
+        self.show_success("Updated successfully")
+        self.update_adjustment_labels()
+
     @QtCore.Slot()
     def adjust(self):
-        self.err_label.setText("")
+        self.empty_message_label()
         self.th_send_adj = QtCore.QThread()
         cs = self.conn_status
         az = self.az_extra_adjustment.value()
@@ -650,11 +690,27 @@ class AdjustWidget(QtWidgets.QWidget):
         self.worker.finished.connect(self.th_send_adj.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker.error.connect(self.show_error)
-        self.worker.success.connect(self.update_adjustment_labels)
+        self.worker.success.connect(self.success_adjusting_solys2)
         self.worker.finished.connect(self.thread_finished)
         self.th_send_adj.finished.connect(self.th_send_adj.deleteLater)
         self.thread_started()
         self.th_send_adj.start()
 
+    def empty_message_label(self):
+        self.message_l.setText("")
+        label_color = constants.COLOR_TRANSPARENT
+        self.message_l.setStyleSheet("background: {}".format(label_color))
+        self.message_l.repaint()
+
     def show_error(self, msg: str):
-        self.err_label.setText("Error: {}".format(msg))
+        msg = "Error: {}".format(msg)
+        label_color = constants.COLOR_RED
+        self.message_l.setText(msg)
+        self.message_l.setStyleSheet("background-color: {}".format(label_color))
+        self.message_l.repaint()
+
+    def show_success(self, msg: str):
+        label_color = constants.COLOR_GREEN
+        self.message_l.setText(msg)
+        self.message_l.setStyleSheet("background-color: {}".format(label_color))
+        self.message_l.repaint()
