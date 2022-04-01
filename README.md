@@ -4,6 +4,17 @@
 
 Desktop app for automating the Solys2.
 
+## Notice of Non-Affiliation and Disclaimer
+
+We are not affiliated, associated, authorized, endorsed by, or in any way officially
+connected with the SOLYS2 or with Kipp & Zonen, or any of its subsidiaries, or its
+affiliates.
+
+The official Kipp & Zonen website can be found at [kippzonen.com](https://kippzonen.com).
+
+The names SOLYS2 and Kipp & Zonen as well as related names, marks, emblems and images are
+registered trademarks of their respective owners.
+
 ## Features
 
 ### Tracking
