@@ -10,15 +10,16 @@ It exports the following classes:
 """
 
 """___Built-In Modules___"""
-from typing import List, Tuple
+from typing import List, Union
 import time
 from threading import Thread, Lock
 import logging
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
-from solys2 import solys2 as s2
-from solys2 import autotrack as aut
+from solys2.automation import autotrack as aut
+from solys2.automation import calibration as cali
+from solys2 import common
 
 """___Solys2Tracker Modules___"""
 try:
@@ -224,18 +225,20 @@ class BodyTrackWidget(QtWidgets.QWidget):
             cs = self.conn_status
             seconds = self.seconds_input.value()
             altitude = self.altitude_input.value()
+            logger = common.create_file_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:
                 library = aut.psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, True,
-                    self.logfile, library, altitude, self.kernels_path, self.log_handlers)
+                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
+                    library, altitude, self.kernels_path)
             else:
                 library = aut.psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, True, self.logfile,
-                    library, altitude, self.kernels_path, self.log_handlers)
+                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
+                    library, altitude, self.kernels_path)
+            self.tracker.start_tracking()
             self.cancel_button.setVisible(True)
         except:
             self.finished_tracking()
@@ -498,7 +501,6 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_countdown_label.setVisible(True)
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
-        self.is_finished = aut._ContainedBool(False)
         try:
             cs = self.conn_status
             az_min = ze_min = self.range_first_input.value()
@@ -506,29 +508,33 @@ class BodyCrossWidget(QtWidgets.QWidget):
             az_step = ze_step = self.step_input.value()
             countdown = self.countdown_input.value()
             rest = self.rest_input.value()
-            cp = aut.CrossParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step, countdown, rest)
+            cp = cali.CrossParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step, countdown, rest)
             altitude = self.height_input.value()
             logger = get_custom_logger(self.logfile, self.log_handlers)
-            self.mutex_cont = Lock()
-            self.cont_cross = aut._ContainedBool(True)
             if self.body == BodyEnum.SUN:
                 library = aut.psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.SunLibrary.PYSOLAR
-                func = aut.solar_cross
                 if self.is_mesh:
-                    func = aut.solar_mesh
+                    self.crosser = cali.SolarMesh(cs.ip, cp, library, logger, cs.port, cs.password,
+                        altitude, self.kernels_path)
+                else:
+                    self.crosser = cali.SolarCross(cs.ip, cp, library, logger, cs.port, cs.password,
+                        altitude, self.kernels_path)
             else:
                 library = aut.psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = aut.psc.MoonLibrary.EPHEM_MOON
-                func = aut.lunar_cross
                 if self.is_mesh:
-                    func = aut.lunar_mesh
-            self.cross_thread = Thread(target=func, args=[cs.ip, logger, cp,
-                cs.port, cs.password, self.is_finished, library, altitude,
-                self.kernels_path, self.mutex_cont, self.cont_cross])
-            self.cross_thread.start()
+                    self.crosser = cali.LunarMesh(cs.ip, cp, library, logger, cs.port, cs.password,
+                        altitude, self.kernels_path)
+                else:
+                    self.crosser = cali.LunarCross(cs.ip, cp, library, logger, cs.port, cs.password,
+                        altitude, self.kernels_path)
+            if self.is_mesh:
+                self.crosser.start_mesh()
+            else:
+                self.crosser.start_cross()
             self.cancel_button.setVisible(True)
             self.start_checking_cross_end()
         except:
@@ -540,24 +546,24 @@ class BodyCrossWidget(QtWidgets.QWidget):
         """
         finished = QtCore.Signal()
 
-        def __init__(self, is_finished: aut._ContainedBool):
+        def __init__(self, crosser: Union[cali._BodyCross, cali._BodyMesh]):
             """
             Parameters
             ----------
-            is_finished : _ContainedBool
-                Contained bool that contains the info that if the cross has finished.
+            crosser : _BodyCross | _BodyMesh
+                bodycrosser or bodymesher that will track the celestial body.
             """
             super().__init__()
-            self.is_finished = is_finished
+            self.crs = crosser
 
         def run(self):
-            while not self.is_finished.value:
+            while not self.crs.is_finished():
                 time.sleep(1)
             self.finished.emit()
 
     def start_checking_cross_end(self):
         self.th = QtCore.QThread()
-        self.worker = BodyCrossWidget.CrossWorker(self.is_finished)
+        self.worker = BodyCrossWidget.CrossWorker(self.crosser)
         self.worker.moveToThread(self.th)
         self.th.started.connect(self.worker.run)
         self.worker.finished.connect(self.th.quit)
@@ -570,9 +576,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
     def cancel_button_press(self):
         "Slot for the GUI action of pressing the cancel crossing button."
         self.cancel_button.setDisabled(True)
-        self.mutex_cont.acquire()
-        self.cont_cross.value = False
-        self.mutex_cont.release()
+        if self.is_mesh:
+            self.crosser.stop_mesh()
+        else:
+            self.crosser.stop_cross()
     
     def finished_crossing(self):
         """Crossing finished/stopped. Perform the needed actions."""
@@ -663,7 +670,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(True)
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
-        self.is_finished = aut._ContainedBool(False)
+        self.is_finished = common.ContainedBool(False)
         try:
             cs = self.conn_status
             altitude = 0
@@ -671,7 +678,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
             library = aut.psc.MoonLibrary.SPICEDMOON
             if self.kernels_path is None or self.kernels_path == "":
                 library = aut.psc.MoonLibrary.EPHEM_MOON
-            self.black_thread = Thread(target=aut.black_moon, args=[cs.ip, logger, cs.port,
+            self.black_thread = Thread(target=cali.black_moon, args=[cs.ip, logger, cs.port,
                 cs.password, self.is_finished, library, altitude, self.kernels_path])
             self.black_thread.start()
             self.start_checking_black_end()
@@ -684,7 +691,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         """
         finished = QtCore.Signal()
 
-        def __init__(self, is_finished: aut._ContainedBool):
+        def __init__(self, is_finished: common.ContainedBool):
             """
             Parameters
             ----------
