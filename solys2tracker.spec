@@ -15,8 +15,7 @@ if sys.platform == 'linux':
         ('.venv/lib/python3.8/site-packages/spiceypy/utils/libcspice.so', './spiceypy/utils')
     ]
     a_datas = [
-        ('solys2tracker/style.qss', '.'),
-        ('./solys2tracker/assets/icon.png', './solys2tracker/assets') # Maybe this one is not necessary
+        ('solys2tracker/style.qss', '.')
     ]
 elif sys.platform == 'win32' or sys.platform == 'win64':
     a_pathex = ['.\\.venv\\Lib\\site-packages\\']
