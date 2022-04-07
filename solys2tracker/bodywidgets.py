@@ -19,6 +19,7 @@ import logging
 from PySide2 import QtWidgets, QtCore, QtGui
 from solys2.automation import autotrack as aut
 from solys2.automation import calibration as cali
+from solys2.automation import positioncalc as psc
 from solys2 import common
 
 """___Solys2Tracker Modules___"""
@@ -227,15 +228,15 @@ class BodyTrackWidget(QtWidgets.QWidget):
             altitude = self.altitude_input.value()
             logger = common.create_file_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:
-                library = aut.psc.SunLibrary.SPICEDSUN
+                library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
-                    library = aut.psc.SunLibrary.PYSOLAR
+                    library = psc.SunLibrary.PYSOLAR
                 self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, self.kernels_path)
             else:
-                library = aut.psc.MoonLibrary.SPICEDMOON
+                library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
-                    library = aut.psc.MoonLibrary.EPHEM_MOON
+                    library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, self.kernels_path)
             self.tracker.start_tracking()
@@ -512,9 +513,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
             altitude = self.height_input.value()
             logger = get_custom_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:
-                library = aut.psc.SunLibrary.SPICEDSUN
+                library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
-                    library = aut.psc.SunLibrary.PYSOLAR
+                    library = psc.SunLibrary.PYSOLAR
                 if self.is_mesh:
                     self.crosser = cali.SolarMesh(cs.ip, cp, library, logger, cs.port, cs.password,
                         altitude, self.kernels_path)
@@ -522,9 +523,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
                     self.crosser = cali.SolarCross(cs.ip, cp, library, logger, cs.port, cs.password,
                         altitude, self.kernels_path)
             else:
-                library = aut.psc.MoonLibrary.SPICEDMOON
+                library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
-                    library = aut.psc.MoonLibrary.EPHEM_MOON
+                    library = psc.MoonLibrary.EPHEM_MOON
                 if self.is_mesh:
                     self.crosser = cali.LunarMesh(cs.ip, cp, library, logger, cs.port, cs.password,
                         altitude, self.kernels_path)
@@ -675,9 +676,9 @@ class BodyBlackWidget(QtWidgets.QWidget):
             cs = self.conn_status
             altitude = 0
             logger = get_custom_logger(self.logfile, self.log_handlers)
-            library = aut.psc.MoonLibrary.SPICEDMOON
+            library = psc.MoonLibrary.SPICEDMOON
             if self.kernels_path is None or self.kernels_path == "":
-                library = aut.psc.MoonLibrary.EPHEM_MOON
+                library = psc.MoonLibrary.EPHEM_MOON
             self.black_thread = Thread(target=cali.black_moon, args=[cs.ip, logger, cs.port,
                 cs.password, self.is_finished, library, altitude, self.kernels_path])
             self.black_thread.start()
