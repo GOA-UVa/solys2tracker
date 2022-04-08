@@ -239,7 +239,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
                     library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, self.kernels_path)
-            self.tracker.start_tracking()
+            self.tracker.start()
             self.cancel_button.setVisible(True)
         except:
             self.finished_tracking()
@@ -261,7 +261,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
             self.bt = tracker
 
         def run(self):
-            self.bt.stop_tracking()
+            self.bt.stop()
             while not self.bt.is_finished():
                 time.sleep(1)
             self.finished.emit()
@@ -509,7 +509,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
             az_step = ze_step = self.step_input.value()
             countdown = self.countdown_input.value()
             rest = self.rest_input.value()
-            cp = cali.CrossParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step, countdown, rest)
+            cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
+                countdown, rest)
             altitude = self.height_input.value()
             logger = get_custom_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:
@@ -532,10 +533,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 else:
                     self.crosser = cali.LunarCross(cs.ip, cp, library, logger, cs.port, cs.password,
                         altitude, self.kernels_path)
-            if self.is_mesh:
-                self.crosser.start_mesh()
-            else:
-                self.crosser.start_cross()
+            self.crosser.start()
             self.cancel_button.setVisible(True)
             self.start_checking_cross_end()
         except:
@@ -577,10 +575,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
     def cancel_button_press(self):
         "Slot for the GUI action of pressing the cancel crossing button."
         self.cancel_button.setDisabled(True)
-        if self.is_mesh:
-            self.crosser.stop_mesh()
-        else:
-            self.crosser.stop_cross()
+        self.crosser.stop()
     
     def finished_crossing(self):
         """Crossing finished/stopped. Perform the needed actions."""
