@@ -15,14 +15,14 @@ from solys2 import solys2 as s2
 
 """___Solys2Tracker Modules___"""
 try:
-    from solys2tracker.s2ttypes import ConnectionStatus
+    from solys2tracker.s2ttypes import SessionStatus
     from solys2tracker import constants
     from solys2tracker import ifaces
     from solys2tracker.common import add_spacer
 except:
     import constants
     import ifaces
-    from s2ttypes import ConnectionStatus
+    from s2ttypes import SessionStatus
     from common import add_spacer
 
 """___Authorship___"""
@@ -64,16 +64,16 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
     """
     Configuration sub navigaton bar that allows the user to change between tabs.
     """
-    def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
         config_w : IConfigWidget
             Parent widget that contains the configuration page.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
-        self.conn_status = conn_status
+        self.session_status = session_status
         self.config_w = config_w
         self._build_layout()
 
@@ -119,7 +119,7 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         Updates the enabled status of the buttons based on if the connection_status
         is connected.
         """
-        enabled = self.conn_status.is_connected
+        enabled = self.session_status.is_connected
         self.set_enabled_buttons(enabled)
     
     @QtCore.Slot()
@@ -146,17 +146,17 @@ class ConnectionWidget(QtWidgets.QWidget):
     """
     Configuration page containing the Solys2 connection functionality.
     """
-    def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
         config_w : IConfigWidget
             Parent widget that contains the configuration page.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
-        self.conn_status = conn_status
+        self.session_status = session_status
         self.config_w = config_w
         self._build_layout()
     
@@ -176,7 +176,7 @@ class ConnectionWidget(QtWidgets.QWidget):
         # First row (IP)
         self.lay_ip = QtWidgets.QHBoxLayout()
         self.ip_label = QtWidgets.QLabel("IP:", alignment=QtCore.Qt.AlignCenter)
-        self.ip_input = QtWidgets.QLineEdit(self.conn_status.ip)
+        self.ip_input = QtWidgets.QLineEdit(self.session_status.ip)
         add_spacer(self.lay_ip, self.h_spacers)
         self.lay_ip.addWidget(self.ip_label)
         add_spacer(self.lay_ip, self.h_spacers)
@@ -189,7 +189,7 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.port_input.setMaximum(1000000)
         self.port_input.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
             self.port_input.sizePolicy().verticalPolicy()))
-        self.port_input.setValue(self.conn_status.port)
+        self.port_input.setValue(self.session_status.port)
         add_spacer(self.lay_port, self.h_spacers)
         self.lay_port.addWidget(self.port_label)
         add_spacer(self.lay_port, self.h_spacers)
@@ -198,7 +198,7 @@ class ConnectionWidget(QtWidgets.QWidget):
         # Third row (Password)
         self.lay_pass = QtWidgets.QHBoxLayout()
         self.pass_label = QtWidgets.QLabel("Password:", alignment=QtCore.Qt.AlignCenter)
-        self.pass_input = QtWidgets.QLineEdit(self.conn_status.password)
+        self.pass_input = QtWidgets.QLineEdit(self.session_status.password)
         add_spacer(self.lay_pass, self.h_spacers)
         self.lay_pass.addWidget(self.pass_label)
         add_spacer(self.lay_pass, self.h_spacers)
@@ -217,7 +217,7 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.message_l.setObjectName("message")
         # Connect button
         connect_msg = "Connect"
-        if self.conn_status.is_connected:
+        if self.session_status.is_connected:
             connect_msg = "Reconnect"
         self.connect_but = QtWidgets.QPushButton(connect_msg)
         self.connect_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -270,9 +270,9 @@ class ConnectionWidget(QtWidgets.QWidget):
         ip = self.ip_input.text()
         port = self.port_input.value()
         password = self.pass_input.text()
-        self.conn_status.ip = ip
-        self.conn_status.port = port
-        self.conn_status.password = password
+        self.session_status.ip = ip
+        self.session_status.port = port
+        self.session_status.password = password
 
         self.th = QtCore.QThread()
         self.worker = ConnectionWidget.TryConnectionWorker(ip, port, password)
@@ -300,30 +300,30 @@ class ConnectionWidget(QtWidgets.QWidget):
         label_color = constants.COLOR_RED
         connect_msg = "Connect"
         if is_connected:
-            self.conn_status.save_ip_data()
+            self.session_status.save_ip_data()
             label_color = constants.COLOR_GREEN
             connect_msg = "Reconnect"
         self.connect_but.setText(connect_msg)
         self.message_l.setStyleSheet("background-color: {}".format(label_color))
         self.message_l.repaint()
-        self.conn_status.is_connected = is_connected
+        self.session_status.is_connected = is_connected
         self.config_w.connection_changed()
         self.connect_but.setEnabled(True)
 
 class SpiceWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
         config_w : IConfigWidget
             Parent widget that contains the configuration page.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.title_str = "Configuration | SPICE"
         self.config_w = config_w
-        self.conn_status = conn_status
+        self.session_status = session_status
         self._build_layout()
     
     def _build_layout(self):
@@ -349,7 +349,7 @@ class SpiceWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.input_layout)
         # Selected directory
-        self.kernels_path = self.conn_status.kernels_path
+        self.kernels_path = self.session_status.kernels_path
         self.dir_str = self.kernels_path
         if self.dir_str == "":
             self.dir_str = "No directory selected"
@@ -381,9 +381,9 @@ class SpiceWidget(QtWidgets.QWidget):
     
     @QtCore.Slot()
     def save_directory(self):
-        self.conn_status.kernels_path = self.kernels_path
+        self.session_status.kernels_path = self.kernels_path
         try:
-            self.conn_status.save_kernels_path_data()
+            self.session_status.save_kernels_path_data()
         except:
             msg = "Error saving the kernels directory data"
             label_color = constants.COLOR_RED
@@ -396,19 +396,19 @@ class SpiceWidget(QtWidgets.QWidget):
             self.message_l.repaint()
 
 class LogWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
         config_w : IConfigWidget
             Parent widget that contains the configuration page.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.title_str = "Configuration | Log"
         self.config_w = config_w
-        self.conn_status = conn_status
+        self.session_status = session_status
         self._build_layout()
     
     def _build_layout(self):
@@ -426,13 +426,7 @@ class LogWidget(QtWidgets.QWidget):
         self.select_btn = QtWidgets.QPushButton("Select folder")
         self.select_btn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.select_btn.clicked.connect(self.open_file_dialog)
-        try:
-            rindex_slash = self.conn_status.logfile.rindex('/')
-        except:
-            rindex_slash = -1
-        self.log_folder = "."
-        if rindex_slash >= 0:
-            self.log_folder = self.conn_status.logfile[:rindex_slash]
+        self.log_folder = self.session_status.logfolder
         self.dir_str = self.log_folder
         if self.dir_str == "":
             self.dir_str = "No directory selected"
@@ -473,9 +467,9 @@ class LogWidget(QtWidgets.QWidget):
     
     @QtCore.Slot()
     def save_directory(self):
-        self.conn_status.set_logfolder(self.log_folder)
+        self.session_status.logfolder = self.log_folder
         try:
-            self.conn_status.save_logfile_data()
+            self.session_status.save_logfile_data()
         except:
             msg = "Error saving the logging directory data"
             label_color = constants.COLOR_RED
@@ -488,19 +482,19 @@ class LogWidget(QtWidgets.QWidget):
             self.message_l.repaint()
 
 class AdjustWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, conn_status: ConnectionStatus):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
         config_w : IConfigWidget
             Parent widget that contains the configuration page.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.title_str = "Configuration | Adjust"
         self.config_w = config_w
-        self.conn_status = conn_status
+        self.session_status = session_status
         self._build_layout()
         self.update_adjustment_labels()
     
@@ -605,7 +599,7 @@ class AdjustWidget(QtWidgets.QWidget):
 
     def update_adjustment_labels(self):
         self.th = QtCore.QThread()
-        cs = self.conn_status
+        cs = self.session_status
         self.worker = AdjustWidget.AdjustWorker(cs.ip, cs.port, cs.password)
         self.worker.moveToThread(self.th)
         self.th.started.connect(self.worker.run)
@@ -681,7 +675,7 @@ class AdjustWidget(QtWidgets.QWidget):
     def adjust(self):
         self.empty_message_label()
         self.th_send_adj = QtCore.QThread()
-        cs = self.conn_status
+        cs = self.session_status
         az = self.az_extra_adjustment.value()
         ze = self.ze_extra_adjustment.value()
         self.worker = AdjustWidget.SendAdjustWorker(cs.ip, cs.port, cs.password, az, ze)

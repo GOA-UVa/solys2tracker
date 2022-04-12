@@ -11,10 +11,8 @@ try:
 except:
     import localdata
 
-_DEFAULT_LOGFILE = "log.temp.out.txt"
-
 @dataclass
-class ConnectionStatus:
+class SessionStatus:
     """
     Attributes
     ----------
@@ -26,7 +24,7 @@ class ConnectionStatus:
     port: int
     password: str
     is_connected: bool
-    logfile: str
+    logfolder: str
     kernels_path: str
 
     def __post_init__(self):
@@ -38,10 +36,10 @@ class ConnectionStatus:
             self.password = "solys"
         if self.is_connected is None:
             self.is_connected = False
-        if self.logfile is None:
-            self.logfile = self._get_logfile_data()
-            if self.logfile == "":
-                self.logfile = _DEFAULT_LOGFILE
+        if self.logfolder is None:
+            self.logfolder = self._get_logfolder_data()
+            if self.logfolder == "":
+                self.logfolder = "."
         if self.kernels_path is None:
             self.kernels_path = self._get_kernels_path_data()
     
@@ -51,8 +49,8 @@ class ConnectionStatus:
     def _get_kernels_path_data(self) -> str:
         return localdata.get_value("kernels_path")
 
-    def _get_logfile_data(self) -> str:
-        return localdata.get_value("logfile")
+    def _get_logfolder_data(self) -> str:
+        return localdata.get_value("logfolder")
 
     def save_ip_data(self):
         localdata.save_value("ip", self.ip)
@@ -60,11 +58,8 @@ class ConnectionStatus:
     def save_kernels_path_data(self):
         localdata.save_value("kernels_path", self.kernels_path)
 
-    def save_logfile_data(self):
-        localdata.save_value("logfile", self.logfile)
-
-    def set_logfolder(self, logfolder: str):
-        self.logfile = logfolder + "/" + _DEFAULT_LOGFILE
+    def save_logfolder_data(self):
+        localdata.save_value("logfolder", self.logfolder)
 
 class BodyEnum(Enum):
     SUN = 0

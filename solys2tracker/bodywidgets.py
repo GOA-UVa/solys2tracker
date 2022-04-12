@@ -14,6 +14,8 @@ from typing import List, Union
 import time
 from threading import Thread, Lock
 import logging
+from os import path
+from datetime import datetime
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -24,14 +26,14 @@ from solys2 import common
 
 """___Solys2Tracker Modules___"""
 try:
-    from solys2tracker.s2ttypes import ConnectionStatus, BodyEnum
+    from solys2tracker.s2ttypes import SessionStatus, BodyEnum
     from solys2tracker import constants
     from solys2tracker import ifaces
     from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
 except:
     import constants
     import ifaces
-    from s2ttypes import ConnectionStatus, BodyEnum
+    from s2ttypes import SessionStatus, BodyEnum
     from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
 
 """___Authorship___"""
@@ -112,12 +114,30 @@ class BodyMenuWidget(QtWidgets.QWidget):
         """
         self.body_tab.change_to_view(option)
 
+_TRACK_LOGTITLE = "TRACK"
+_CROSS_LOGTITLE = "CROSS"
+_MESH_LOGTITLE = "MESH"
+_BLACK_LOGTITLE = "BLACK"
+
+def _create_log_file_name(logfolder: str, option: str) -> str:
+    dt = datetime.utcnow()
+    dt_st = dt.strftime("%Y%m%d%H%M%S")
+    logfile = "{}_{}.log.txt".format(option, dt_st)
+    logfile = path.join(logfolder, logfile)
+    return logfile
+
+def _close_logger(logger: logging.Logger):
+    handlers = logger.handlers[:]
+    for handler in handlers:
+        logger.removeHandler(handler)
+        handler.close()
+
 class BodyTrackWidget(QtWidgets.QWidget):
     """
     Body page that contains the tracking functionality.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
-        logfile: str = "log.temp.out.txt", kernels_path: str = ""):
+    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, session_status: SessionStatus,
+        kernels_path: str = ""):
         """
         Parameters
         ----------
@@ -125,10 +145,8 @@ class BodyTrackWidget(QtWidgets.QWidget):
             Parent body tab that contains this page.
         body : BodyEnum
             Body (moon or sun) of the body_tab.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Connection data and status.
-        logfile : str
-            Output logfile. By default is "log.temp.out.txt".
         kernels_path : str
             In case that SPICE is used, the path where the kernels directory is located
             must be specified.
@@ -140,8 +158,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         if body != BodyEnum.SUN:
             self.title_str = "MOON"
         self.title_str = self.title_str + " | " + constants.TRACK_STR
-        self.conn_status = conn_status
-        self.logfile = logfile
+        self.session_status = session_status
         self.kernels_path = kernels_path
         self._build_layout()
 
@@ -222,22 +239,23 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(True)
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
+        self.logfile = _create_log_file_name(self.session_status.logfolder, _TRACK_LOGTITLE)
         try:
-            cs = self.conn_status
+            cs = self.session_status
             seconds = self.seconds_input.value()
             altitude = self.altitude_input.value()
-            logger = common.create_file_logger(self.logfile, self.log_handlers)
+            self.logger = common.create_file_logger(self.logfile, self.log_handlers, logging.WARNING)
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
+                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
                     library, altitude, self.kernels_path)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
+                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
                     library, altitude, self.kernels_path)
             self.tracker.start()
             self.cancel_button.setVisible(True)
@@ -283,6 +301,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
     def finished_tracking(self):
         """Tracking finished/stopped. Perform the needed actions."""
         self.body_tab.set_enabled_close_button(True)
+        _close_logger(self.logger)
         self.log_handler.end_handler()
         self.cancel_button.setDisabled(False)
         self.cancel_button.setVisible(False)
@@ -295,8 +314,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
     """
     Body page that contains the cross and mesh functionalities.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
-        logfile: str = "log.temp.out.txt", kernels_path: str = "", is_mesh: bool = False):
+    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, session_status: SessionStatus,
+        kernels_path: str = "", is_mesh: bool = False):
         """
         Parameters
         ----------
@@ -304,10 +323,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
             Parent body tab that contains this page.
         body : BodyEnum
             Body (moon or sun) of the body_tab.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Connection data and status.
-        logfile : str
-            Output logfile. By default is "log.temp.out.txt".
         kernels_path : str
             In case that SPICE is used, the path where the kernels directory is located
             must be specified.
@@ -325,8 +342,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         if is_mesh:
             self.op_name = constants.MESH_STR
         self.title_str = self.title_str + " | " + self.op_name
-        self.conn_status = conn_status
-        self.logfile = logfile
+        self.session_status = session_status
         self.kernels_path = kernels_path
         self._build_layout()
 
@@ -502,8 +518,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_countdown_label.setVisible(True)
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
+        option = _CROSS_LOGTITLE
+        if self.is_mesh:
+            option = _MESH_LOGTITLE
+        self.logfile = _create_log_file_name(self.session_status.logfolder, option)
         try:
-            cs = self.conn_status
+            cs = self.session_status
             az_min = ze_min = self.range_first_input.value()
             az_max = ze_max = self.range_second_input.value()
             az_step = ze_step = self.step_input.value()
@@ -512,27 +532,27 @@ class BodyCrossWidget(QtWidgets.QWidget):
             cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
                 countdown, rest)
             altitude = self.height_input.value()
-            logger = get_custom_logger(self.logfile, self.log_handlers)
+            self.logger = get_custom_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
                 if self.is_mesh:
-                    self.crosser = cali.SolarMesh(cs.ip, cp, library, logger, cs.port, cs.password,
-                        altitude, self.kernels_path)
+                    self.crosser = cali.SolarMesh(cs.ip, cp, library, self.logger, cs.port,
+                        cs.password, altitude, self.kernels_path)
                 else:
-                    self.crosser = cali.SolarCross(cs.ip, cp, library, logger, cs.port, cs.password,
-                        altitude, self.kernels_path)
+                    self.crosser = cali.SolarCross(cs.ip, cp, library, self.logger, cs.port,
+                        cs.password, altitude, self.kernels_path)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
                 if self.is_mesh:
-                    self.crosser = cali.LunarMesh(cs.ip, cp, library, logger, cs.port, cs.password,
-                        altitude, self.kernels_path)
+                    self.crosser = cali.LunarMesh(cs.ip, cp, library, self.logger, cs.port,
+                        cs.password, altitude, self.kernels_path)
                 else:
-                    self.crosser = cali.LunarCross(cs.ip, cp, library, logger, cs.port, cs.password,
-                        altitude, self.kernels_path)
+                    self.crosser = cali.LunarCross(cs.ip, cp, library, self.logger, cs.port,
+                        cs.password, altitude, self.kernels_path)
             self.crosser.start()
             self.cancel_button.setVisible(True)
             self.start_checking_cross_end()
@@ -580,6 +600,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
     def finished_crossing(self):
         """Crossing finished/stopped. Perform the needed actions."""
         self.body_tab.set_enabled_close_button(True)
+        _close_logger(self.logger)
         self.log_handler.end_handler()
         self.log_countdown.end_logger()
         self.cancel_button.setDisabled(False)
@@ -597,8 +618,8 @@ class BodyBlackWidget(QtWidgets.QWidget):
     """
     Body page that contains the black moon functionality.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, conn_status: ConnectionStatus,
-        logfile: str = "log.temp.out.txt", kernels_path: str = ""):
+    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, session_status: SessionStatus,
+        kernels_path: str = ""):
         """
         Parameters
         ----------
@@ -606,10 +627,8 @@ class BodyBlackWidget(QtWidgets.QWidget):
             Parent body tab that contains this page.
         body : BodyEnum
             Body (moon or sun) of the body_tab.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Connection data and status.
-        logfile : str
-            Output logfile. By default is "log.temp.out.txt".
         kernels_path : str
             In case that SPICE is used, the path where the kernels directory is located
             must be specified.
@@ -621,8 +640,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         if body != BodyEnum.SUN:
             self.title_str = "MOON"
         self.title_str = self.title_str + " | " + constants.BLACK_STR
-        self.conn_status = conn_status
-        self.logfile = logfile
+        self.session_status = session_status
         self.kernels_path = kernels_path
         self._build_layout()
 
@@ -667,14 +685,15 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
         self.is_finished = common.ContainedBool(False)
+        self.logfile = _create_log_file_name(self.session_status.logfolder, _BLACK_LOGTITLE)
         try:
-            cs = self.conn_status
+            cs = self.session_status
             altitude = 0
-            logger = get_custom_logger(self.logfile, self.log_handlers)
+            self.logger = get_custom_logger(self.logfile, self.log_handlers)
             library = psc.MoonLibrary.SPICEDMOON
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.MoonLibrary.EPHEM_MOON
-            self.black_thread = Thread(target=cali.black_moon, args=[cs.ip, logger, cs.port,
+            self.black_thread = Thread(target=cali.black_moon, args=[cs.ip, self.logger, cs.port,
                 cs.password, self.is_finished, library, altitude, self.kernels_path])
             self.black_thread.start()
             self.start_checking_black_end()
@@ -716,6 +735,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
     def finished_black(self):
         """Black finished/stopped. Perform the needed actions."""
         self.body_tab.set_enabled_close_button(True)
+        _close_logger(self.logger)
         self.log_handler.end_handler()
         self.start_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)

@@ -32,7 +32,7 @@ class ISolys2Widget(ABC):
     @abstractmethod
     def connection_changed(self) -> None:
         """
-        Function called when the connection status (self.conn_status) has changed.
+        Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         pass
@@ -136,7 +136,7 @@ class IConfigWidget(ABC):
     @abstractmethod
     def connection_changed(self):
         """
-        Function called when the connection status (self.conn_status) has changed.
+        Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         pass
