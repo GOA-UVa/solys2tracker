@@ -1,8 +1,8 @@
 # solys2tracker
 
-![Version 0.1.1-alpha2](https://img.shields.io/badge/version-0.1.1--alpha2-informational)
+![Version 0.1.1-alpha3](https://img.shields.io/badge/version-0.1.1--alpha3-informational)
 
-Desktop app for automating the Solys2.
+Desktop app for automating the Solys2 letting it track the Moon and the Sun.
 
 ## Notice of Non-Affiliation and Disclaimer
 
