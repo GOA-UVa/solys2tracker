@@ -93,6 +93,9 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         self.adjust_but = QtWidgets.QPushButton("Adjust")
         self.adjust_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.adjust_but.clicked.connect(self.press_adjust)
+        self.position_but = QtWidgets.QPushButton("Position")
+        self.position_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.position_but.clicked.connect(self.press_move_pos)
         self.main_layout = QtWidgets.QVBoxLayout(self)
         add_spacer(self.main_layout, self.h_spacers)
         self.main_layout.addWidget(self.conn_but, 1)
@@ -102,6 +105,8 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.log_but, 1)
         add_spacer(self.main_layout, self.h_spacers)
         self.main_layout.addWidget(self.adjust_but, 1)
+        add_spacer(self.main_layout, self.h_spacers)
+        self.main_layout.addWidget(self.position_but, 1)
         add_spacer(self.main_layout, self.h_spacers)
         self.update_button_enabling()
 
@@ -113,6 +118,7 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         self.spice_but.setEnabled(enabled)
         self.log_but.setEnabled(enabled)
         self.adjust_but.setEnabled(enabled)
+        self.position_but.setEnabled(enabled)
 
     def update_button_enabling(self):
         """
@@ -141,6 +147,11 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
     def press_adjust(self):
         """Press the ADJUST button."""
         self.config_w.change_tab_adjust()
+    
+    @QtCore.Slot()
+    def press_move_pos(self):
+        """Press the POSITION button."""
+        self.config_w.change_tab_move_pos()
 
 class ConnectionWidget(QtWidgets.QWidget):
     """
@@ -685,6 +696,233 @@ class AdjustWidget(QtWidgets.QWidget):
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker.error.connect(self.show_error)
         self.worker.success.connect(self.success_adjusting_solys2)
+        self.worker.finished.connect(self.thread_finished)
+        self.th_send_adj.finished.connect(self.th_send_adj.deleteLater)
+        self.thread_started()
+        self.th_send_adj.start()
+
+    def empty_message_label(self):
+        self.message_l.setText("")
+        label_color = constants.COLOR_TRANSPARENT
+        self.message_l.setStyleSheet("background: {}".format(label_color))
+        self.message_l.repaint()
+
+    def show_error(self, msg: str):
+        msg = "Error: {}".format(msg)
+        label_color = constants.COLOR_RED
+        self.message_l.setText(msg)
+        self.message_l.setStyleSheet("background-color: {}".format(label_color))
+        self.message_l.repaint()
+
+    def show_success(self, msg: str):
+        label_color = constants.COLOR_GREEN
+        self.message_l.setText(msg)
+        self.message_l.setStyleSheet("background-color: {}".format(label_color))
+        self.message_l.repaint()
+
+class PositionWidget(QtWidgets.QWidget):
+
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+        """
+        Parameters
+        ----------
+        config_w : IConfigWidget
+            Parent widget that contains the configuration page.
+        session_status : SessionStatus
+            Current status of the GUI connection with the Solys2.
+        """
+        super().__init__()
+        self.title_str = "Configuration | Position"
+        self.config_w = config_w
+        self.session_status = session_status
+        self._build_layout()
+        self.update_position_labels()
+    
+    def _build_layout(self):
+        self.v_spacers = []
+        self.h_spacers = []
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        # Title
+        self.title = QtWidgets.QLabel(self.title_str, alignment=QtCore.Qt.AlignCenter)
+        self.title.setObjectName("section_title")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.title)
+        # Current position
+        self.current_layout = QtWidgets.QHBoxLayout()
+        self.az_label = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
+        self.az_curr_pos = QtWidgets.QLabel("?", alignment=QtCore.Qt.AlignLeft)
+        self.ze_label = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
+        self.ze_curr_pos = QtWidgets.QLabel("?", alignment=QtCore.Qt.AlignLeft)
+        add_spacer(self.current_layout, self.h_spacers)
+        self.current_layout.addWidget(self.az_label, 1)
+        add_spacer(self.current_layout, self.h_spacers)
+        self.current_layout.addWidget(self.az_curr_pos, 1)
+        add_spacer(self.current_layout, self.h_spacers)
+        self.current_layout.addWidget(self.ze_label, 1)
+        add_spacer(self.current_layout, self.h_spacers)
+        self.current_layout.addWidget(self.ze_curr_pos, 1)
+        add_spacer(self.current_layout, self.h_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.current_layout)
+        # Input
+        # Input title
+        self.input_title = QtWidgets.QLabel("Set position", alignment=QtCore.Qt.AlignCenter)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.input_title)
+        # Input fields
+        self.input_layout = QtWidgets.QHBoxLayout()
+        self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
+        self.az_sending_position = QtWidgets.QDoubleSpinBox()
+        self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
+        self.ze_sending_position = QtWidgets.QDoubleSpinBox()
+        self.ze_sending_position.setMinimum(-4)
+        self.ze_sending_position.setMaximum(94.9)
+        add_spacer(self.current_layout, self.h_spacers)
+        self.input_layout.addWidget(self.az_label_input, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        self.input_layout.addWidget(self.az_sending_position, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        self.input_layout.addWidget(self.ze_label_input, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        self.input_layout.addWidget(self.ze_sending_position, 1)
+        add_spacer(self.input_layout, self.h_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.input_layout)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.message_l)
+        # Move button
+        self.save_button = QtWidgets.QPushButton("Move")
+        self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.save_button.clicked.connect(self.adjust)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.save_button)
+        add_spacer(self.main_layout, self.v_spacers)
+
+    class PositionWorker(QtCore.QObject):
+        """
+        Worker that will obtain the position from the Solys2
+        """
+        finished = QtCore.Signal()
+        success = QtCore.Signal(float, float)
+        error = QtCore.Signal(str)
+
+        def __init__(self, ip: str, port: int, password: str):
+            """
+            Parameters
+            ----------
+            ip : str
+                Solys2 connection ip.
+            port : int
+                Solys2 connection port.
+            password : str
+                Solys2 connection password.
+            """
+            super().__init__()
+            self.ip = ip
+            self.port = port
+            self.password = password
+
+        def run(self):
+            try:
+                solys = s2.Solys2(self.ip, self.port, self.password)
+                az, ze, _ = solys.get_planned_position()
+                self.success.emit(az, ze)
+            except Exception as e:
+                self.error.emit(str(e))
+            finally:
+                self.finished.emit()
+
+    def update_position_labels(self):
+        self.th = QtCore.QThread()
+        cs = self.session_status
+        self.worker = PositionWidget.PositionWorker(cs.ip, cs.port, cs.password)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.error.connect(self.show_error)
+        self.worker.success.connect(self._update_position_labels)
+        self.worker.finished.connect(self.thread_finished)
+        self.th.finished.connect(self.th.deleteLater)
+        self.thread_started()
+        self.th.start()
+
+    def _update_position_labels(self, az: float, ze: float):
+        self.az_curr_pos.setText(str(az))
+        self.ze_curr_pos.setText(str(ze))
+    
+    def thread_finished(self):
+        self.az_sending_position.setDisabled(False)
+        self.ze_sending_position.setDisabled(False)
+        self.save_button.setDisabled(False)
+        self.config_w.set_disabled_config_navbar(False)
+        self.config_w.set_disabled_navbar(False)
+
+    def thread_started(self):
+        self.az_sending_position.setDisabled(True)
+        self.ze_sending_position.setDisabled(True)
+        self.save_button.setDisabled(True)
+        self.config_w.set_disabled_config_navbar(True)
+        self.config_w.set_disabled_navbar(True)
+
+    class SendPositionWorker(QtCore.QObject):
+        """
+        Worker that will send the position from the Solys2
+        """
+        finished = QtCore.Signal()
+        success = QtCore.Signal()
+        error = QtCore.Signal(str)
+
+        def __init__(self, ip: str, port: int, password: str, az: float, ze: float):
+            """
+            Parameters
+            ----------
+            ip : str
+                Solys2 connection ip.
+            port : int
+                Solys2 connection port.
+            password : str
+                Solys2 connection password.
+            """
+            super().__init__()
+            self.ip = ip
+            self.port = port
+            self.password = password
+            self.az = az
+            self.ze = ze
+
+        def run(self):
+            try:
+                solys = s2.Solys2(self.ip, self.port, self.password)
+                solys.set_azimuth(self.az)
+                solys.set_zenith(self.ze)
+                self.success.emit()
+            except Exception as e:
+                self.error.emit(str(e))
+            finally:
+                self.finished.emit()
+
+    def success_sending_pos_solys2(self):
+        self.show_success("Order sent successfully")
+        self.update_position_labels()
+
+    @QtCore.Slot()
+    def adjust(self):
+        self.empty_message_label()
+        self.th_send_adj = QtCore.QThread()
+        cs = self.session_status
+        az = self.az_sending_position.value()
+        ze = self.ze_sending_position.value()
+        self.worker = PositionWidget.SendPositionWorker(cs.ip, cs.port, cs.password, az, ze)
+        self.worker.moveToThread(self.th_send_adj)
+        self.th_send_adj.started.connect(self.worker.run)
+        self.worker.finished.connect(self.th_send_adj.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.error.connect(self.show_error)
+        self.worker.success.connect(self.success_sending_pos_solys2)
         self.worker.finished.connect(self.thread_finished)
         self.th_send_adj.finished.connect(self.th_send_adj.deleteLater)
         self.thread_started()

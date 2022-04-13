@@ -204,3 +204,10 @@ class IConfigWidget(ABC):
         Change the tab to the ADJUST tab.
         """
         pass
+
+    @abstractmethod
+    def change_tab_move_pos(self) -> None:
+        """
+        Change the tab to the MOVE_POS tab.
+        """
+        pass
