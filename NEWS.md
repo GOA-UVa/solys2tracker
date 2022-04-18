@@ -3,3 +3,6 @@
 - Logfile improved. New file for each process, with UTC datetime in name.
 - Model ConnectionStatus refactorized to SessionStatus
 - Send Position page in configuration tab.
+
+- Height is set in configuration.
+- Using solys v0.2.1a1.

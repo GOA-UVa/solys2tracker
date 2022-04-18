@@ -26,6 +26,7 @@ class SessionStatus:
     is_connected: bool
     logfolder: str
     kernels_path: str
+    height: int
 
     def __post_init__(self):
         if self.ip is None:
@@ -42,6 +43,8 @@ class SessionStatus:
                 self.logfolder = "."
         if self.kernels_path is None:
             self.kernels_path = self._get_kernels_path_data()
+        if self.height is None:
+            self.height = self._get_height_data()
     
     def _get_ip_data(self) -> str:
         return localdata.get_value("ip")
@@ -52,6 +55,12 @@ class SessionStatus:
     def _get_logfolder_data(self) -> str:
         return localdata.get_value("logfolder")
 
+    def _get_height_data(self) -> int:
+        height_str = localdata.get_value("height")
+        if height_str == "":
+            return 0
+        return int(height_str)
+
     def save_ip_data(self):
         localdata.save_value("ip", self.ip)
     
@@ -60,6 +69,9 @@ class SessionStatus:
 
     def save_logfolder_data(self):
         localdata.save_value("logfolder", self.logfolder)
+
+    def save_height_data(self):
+        localdata.save_value("height", self.height)
 
 class BodyEnum(Enum):
     SUN = 0

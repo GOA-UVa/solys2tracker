@@ -96,6 +96,9 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         self.position_but = QtWidgets.QPushButton("Position")
         self.position_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.position_but.clicked.connect(self.press_move_pos)
+        self.other_but = QtWidgets.QPushButton("Other")
+        self.other_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.other_but.clicked.connect(self.press_other)
         self.main_layout = QtWidgets.QVBoxLayout(self)
         add_spacer(self.main_layout, self.h_spacers)
         self.main_layout.addWidget(self.conn_but, 1)
@@ -108,6 +111,8 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.h_spacers)
         self.main_layout.addWidget(self.position_but, 1)
         add_spacer(self.main_layout, self.h_spacers)
+        self.main_layout.addWidget(self.other_but, 1)
+        add_spacer(self.main_layout, self.h_spacers)
         self.update_button_enabling()
 
     def set_enabled_buttons(self, enabled: bool):
@@ -119,6 +124,7 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         self.log_but.setEnabled(enabled)
         self.adjust_but.setEnabled(enabled)
         self.position_but.setEnabled(enabled)
+        self.other_but.setEnabled(enabled)
 
     def update_button_enabling(self):
         """
@@ -152,6 +158,11 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
     def press_move_pos(self):
         """Press the POSITION button."""
         self.config_w.change_tab_move_pos()
+
+    @QtCore.Slot()
+    def press_other(self):
+        """Press the OTHER button."""
+        self.config_w.change_tab_other()
 
 class ConnectionWidget(QtWidgets.QWidget):
     """
@@ -946,3 +957,81 @@ class PositionWidget(QtWidgets.QWidget):
         self.message_l.setText(msg)
         self.message_l.setStyleSheet("background-color: {}".format(label_color))
         self.message_l.repaint()
+
+
+class OtherWidget(QtWidgets.QWidget):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+        """
+        Parameters
+        ----------
+        config_w : IConfigWidget
+            Parent widget that contains the configuration page.
+        session_status : SessionStatus
+            Current status of the GUI connection with the Solys2.
+        """
+        super().__init__()
+        self.title_str = "Configuration | Other"
+        self.config_w = config_w
+        self.session_status = session_status
+        self._build_layout()
+    
+    def _build_layout(self):
+        self.v_spacers = []
+        self.h_spacers = []
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        # Title
+        self.title = QtWidgets.QLabel(self.title_str, alignment=QtCore.Qt.AlignCenter)
+        self.title.setObjectName("section_title")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.title)
+        # Input
+        self.input_layout = QtWidgets.QVBoxLayout()
+        # Height input (Row 1)
+        self.lay_height = QtWidgets.QHBoxLayout()
+        self.height_label = QtWidgets.QLabel("Height (meters):", alignment=QtCore.Qt.AlignCenter)
+        self.height_input = QtWidgets.QSpinBox()
+        self.height_input.setMaximum(10000000)
+        self.height_input.setMinimum(0)
+        self.height_input.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+            self.height_input.sizePolicy().verticalPolicy()))
+        self.height_input.setValue(self.session_status.height)
+        add_spacer(self.lay_height, self.h_spacers)
+        self.lay_height.addWidget(self.height_label)
+        add_spacer(self.lay_height, self.h_spacers)
+        self.lay_height.addWidget(self.height_input)
+        add_spacer(self.lay_height, self.h_spacers)
+        # Finish input
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_height)
+        add_spacer(self.input_layout, self.v_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.input_layout)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.message_l)
+        # Save button
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.save_button.clicked.connect(self.save_others)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.save_button)
+        # Finish main layout
+        add_spacer(self.main_layout, self.v_spacers)
+    
+    @QtCore.Slot()
+    def save_others(self):
+        self.session_status.height = self.height_input.value()
+        try:
+            self.session_status.save_height_data()
+        except:
+            msg = "Error saving the data"
+            label_color = constants.COLOR_RED
+        else:
+            msg = "Saved successfully"
+            label_color = constants.COLOR_GREEN
+        finally:
+            self.message_l.setText(msg)
+            self.message_l.setStyleSheet("background-color: {}".format(label_color))
+            self.message_l.repaint()

@@ -187,21 +187,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         add_spacer(self.seconds_layout, self.h_spacers)
         self.seconds_layout.addWidget(self.seconds_input)
         add_spacer(self.seconds_layout, self.h_spacers)
-        # Altitude
-        self.altitude_layout = QtWidgets.QHBoxLayout()
-        self.altitude_label = QtWidgets.QLabel("Height:", alignment=QtCore.Qt.AlignCenter)
-        self.altitude_input = QtWidgets.QDoubleSpinBox()
-        self.altitude_input.setMaximum(1000000)
-        add_spacer(self.altitude_layout, self.h_spacers)
-        self.altitude_layout.addWidget(self.altitude_label)
-        add_spacer(self.altitude_layout, self.h_spacers)
-        self.altitude_layout.addWidget(self.altitude_input)
-        add_spacer(self.altitude_layout, self.h_spacers)
         # Finish input
         add_spacer(self.input_layout, self.v_spacers)
         self.input_layout.addLayout(self.seconds_layout)
-        add_spacer(self.input_layout, self.v_spacers)
-        self.input_layout.addLayout(self.altitude_layout)
         add_spacer(self.input_layout, self.v_spacers)
         self.content_layout.addLayout(self.input_layout)
         # Logger
@@ -235,7 +223,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.track_button.setEnabled(False)
         self.body_tab.set_disabled_navbar(True)
         self.seconds_input.setDisabled(True)
-        self.altitude_input.setDisabled(True)
         self.log_handler.setVisible(True)
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
@@ -243,7 +230,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         try:
             cs = self.session_status
             seconds = self.seconds_input.value()
-            altitude = self.altitude_input.value()
+            altitude = cs.height
             self.logger = common.create_file_logger(self.logfile, self.log_handlers, logging.WARNING)
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
@@ -306,7 +293,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.cancel_button.setDisabled(False)
         self.cancel_button.setVisible(False)
         self.seconds_input.setDisabled(False)
-        self.altitude_input.setDisabled(False)
         self.track_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)
 
@@ -447,18 +433,6 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.rest_layout, self.h_spacers)
         self.rest_layout.addWidget(self.rest_input)
         add_spacer(self.rest_layout, self.h_spacers)
-        # Height
-        self.height_layout = QtWidgets.QHBoxLayout()
-        self.height_label = QtWidgets.QLabel("Height (m):", alignment=QtCore.Qt.AlignCenter)
-        self.height_input = QtWidgets.QSpinBox()
-        self.height_input.setMinimum(-1000)
-        self.height_input.setMaximum(1000000)
-        self.height_input.setValue(0)
-        add_spacer(self.height_layout, self.h_spacers)
-        self.height_layout.addWidget(self.height_label)
-        add_spacer(self.height_layout, self.h_spacers)
-        self.height_layout.addWidget(self.height_input)
-        add_spacer(self.height_layout, self.h_spacers)
         # Countdown
         self.log_countdown_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         self.log_countdown_label.setObjectName("countdown")
@@ -531,7 +505,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             rest = self.rest_input.value()
             cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
                 countdown, rest)
-            altitude = self.height_input.value()
+            altitude = self.session_status.height
             self.logger = get_custom_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
@@ -688,7 +662,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.logfile = _create_log_file_name(self.session_status.logfolder, _BLACK_LOGTITLE)
         try:
             cs = self.session_status
-            altitude = 0
+            altitude = cs.height
             self.logger = get_custom_logger(self.logfile, self.log_handlers)
             library = psc.MoonLibrary.SPICEDMOON
             if self.kernels_path is None or self.kernels_path == "":

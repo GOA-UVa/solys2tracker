@@ -31,7 +31,7 @@ except:
     from common import add_spacer
     from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
     from configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
-        AdjustWidget, PositionWidget
+        AdjustWidget, PositionWidget, OtherWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -142,6 +142,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
         LOG = 2
         ADJUST = 3
         MOVE_POS = 4
+        OTHER = 5
 
     def _change_tab(self, page: PageEnum):
         """
@@ -162,8 +163,10 @@ class ConfigurationWidget(QtWidgets.QWidget):
             self.content_w = LogWidget(self, self.session_status)
         elif page == ConfigurationWidget.PageEnum.ADJUST:
             self.content_w = AdjustWidget(self, self.session_status)
-        else:
+        elif page == ConfigurationWidget.PageEnum.MOVE_POS:
             self.content_w = PositionWidget(self, self.session_status)
+        else:
+            self.content_w = OtherWidget(self, self.session_status)
         self.main_layout.addWidget(self.content_w, 1)
 
     def change_tab_connection(self) -> None:
@@ -195,6 +198,12 @@ class ConfigurationWidget(QtWidgets.QWidget):
         Change the tab to the MOVE_POS tab.
         """
         self._change_tab(ConfigurationWidget.PageEnum.MOVE_POS)
+
+    def change_tab_other(self) -> None:
+        """
+        Change the tab to the OTHER tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.OTHER)
 
 class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
