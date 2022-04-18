@@ -308,7 +308,7 @@ def main():
     app = QtWidgets.QApplication([constants.APPLICATION_NAME])
     window = MainWindow()
     main_widget = Solys2Widget(kernels_path)
-    window.setMinimumSize(600, 500)
+    window.resize(650, 450)
     window.setCentralWidget(main_widget)
     window.show()
     window.setWindowTitle(constants.APPLICATION_NAME)
