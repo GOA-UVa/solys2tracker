@@ -10,9 +10,9 @@ It exports the following classes:
 """
 
 """___Built-In Modules___"""
-from typing import List, Union
+from typing import Callable, List, Union, Tuple
 import time
-from threading import Thread, Lock
+from threading import Thread
 import logging
 from os import path
 from datetime import datetime
@@ -23,6 +23,7 @@ from solys2.automation import autotrack as aut
 from solys2.automation import calibration as cali
 from solys2.automation import positioncalc as psc
 from solys2 import common
+import numpy as np
 
 """___Solys2Tracker Modules___"""
 try:
@@ -367,6 +368,30 @@ class BodyCrossWidget(QtWidgets.QWidget):
             except:
                 label_msg = "ERROR"
             self.widget.setText(label_msg)
+    
+    class StepInfoHandler(logging.Handler):
+        def __init__(self, callback_next_step: Callable):
+            super().__init__()
+            self.callback_next_step = callback_next_step
+        
+        def start_handler(self):
+            self.worker = LogWorker()
+
+            # Mover worker to thread and connect signal
+            self.th = QtCore.QThread()
+            self.worker.data_ready.connect(self.handle_data)
+            self.worker.moveToThread(self.th)
+            self.th.finished.connect(self.th.deleteLater)
+            self.th.start()
+
+        def end_logger(self):
+            self.th.quit()
+            self.worker.deleteLater()
+
+        def emit(self, record):
+            msg = self.format(record)
+            if "COUNTDOWN:0" in msg:
+                self.callback_next_step()
 
     def _build_layout(self):
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -386,10 +411,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.range_second_input = QtWidgets.QDoubleSpinBox()
         self.range_first_input.setMinimum(-100)
         self.range_first_input.setMaximum(100)
-        self.range_first_input.setValue(-1.5)
+        self.range_first_input.setValue(-1)
         self.range_second_input.setMinimum(-100)
         self.range_second_input.setMaximum(100)
-        self.range_second_input.setValue(1.5)
+        self.range_second_input.setValue(1)
         add_spacer(self.range_layout, self.h_spacers)
         self.range_layout.addWidget(self.range_label)
         add_spacer(self.range_layout, self.h_spacers)
@@ -403,7 +428,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.step_input = QtWidgets.QDoubleSpinBox()
         self.step_input.setMinimum(-100)
         self.step_input.setMaximum(100)
-        self.step_input.setValue(0.3)
+        self.step_input.setValue(0.1)
         add_spacer(self.step_layout, self.h_spacers)
         self.step_layout.addWidget(self.step_label)
         add_spacer(self.step_layout, self.h_spacers)
@@ -415,7 +440,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.countdown_input = QtWidgets.QSpinBox()
         self.countdown_input.setMinimum(-100)
         self.countdown_input.setMaximum(100)
-        self.countdown_input.setValue(5)
+        self.countdown_input.setValue(3)
         add_spacer(self.countdown_layout, self.h_spacers)
         self.countdown_layout.addWidget(self.countdown_label)
         add_spacer(self.countdown_layout, self.h_spacers)
@@ -427,17 +452,35 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.rest_input = QtWidgets.QSpinBox()
         self.rest_input.setMinimum(-100)
         self.rest_input.setMaximum(100)
-        self.rest_input.setValue(1)
+        self.rest_input.setValue(0)
         add_spacer(self.rest_layout, self.h_spacers)
         self.rest_layout.addWidget(self.rest_label)
         add_spacer(self.rest_layout, self.h_spacers)
         self.rest_layout.addWidget(self.rest_input)
         add_spacer(self.rest_layout, self.h_spacers)
+        # Current step and remaining
+        self.step_info_lay = QtWidgets.QHBoxLayout()
+        self.next_step_label = QtWidgets.QLabel("Next step:", alignment=QtCore.Qt.AlignCenter)
+        self.next_step = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.remaining_steps_label = QtWidgets.QLabel("Remaining steps:", alignment=QtCore.Qt.AlignCenter)
+        self.rem_steps = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        add_spacer(self.step_info_lay, self.h_spacers)
+        self.step_info_lay.addWidget(self.next_step_label)
+        add_spacer(self.step_info_lay, self.h_spacers)
+        self.step_info_lay.addWidget(self.next_step)
+        add_spacer(self.step_info_lay, self.h_spacers)
+        self.step_info_lay.addWidget(self.remaining_steps_label)
+        add_spacer(self.step_info_lay, self.h_spacers)
+        self.step_info_lay.addWidget(self.rem_steps)
+        add_spacer(self.step_info_lay, self.h_spacers)
+        self.step_info_set_visible(False)
+        self.step_info_handler = BodyCrossWidget.StepInfoHandler(self.next_step_detected)
+        self.log_handlers = [self.step_info_handler]
         # Countdown
         self.log_countdown_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         self.log_countdown_label.setObjectName("countdown")
         self.log_countdown = BodyCrossWidget.QLabelCrossCountdownLogger(self.log_countdown_label)
-        self.log_handlers = [self.log_countdown]
+        self.log_handlers += [self.log_countdown]
         self.log_countdown_label.setVisible(False)
         # Logger
         self.log_handler = LoggerDialog()
@@ -462,6 +505,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addLayout(self.rest_layout)
         add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.step_info_lay)
+        add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.log_countdown_label)
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.log_handler)
@@ -474,6 +519,43 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
+
+    def step_info_set_visible(self, visible: bool):
+        self.next_step_label.setVisible(visible)
+        self.next_step.setVisible(visible)
+        self.remaining_steps_label.setVisible(visible)
+        self.rem_steps.setVisible(visible)
+
+    def update_info_steps(self):
+        if self.measured_steps < len(self.steps):
+            next_offset = self.steps[self.measured_steps]
+            self.next_step.setText("A{:+.2f}; Z{:+.2f}".format(next_offset[0], next_offset[1]))
+        else:
+            self.next_step.setText("Finished")
+        self.rem_steps.setText("{}".format(len(self.steps)-self.measured_steps))
+
+    def next_step_detected(self):
+        self.measured_steps += 1
+        self.update_info_steps()
+
+    def generate_steps(self, cp: cali.CalibrationParameters):
+        # Generating the offsets for the visual feedback
+        if self.is_mesh:
+            offsets: List[Tuple[float, float]] = []
+            for i in np.arange(cp.azimuth_min_offset, cp.azimuth_max_offset + cp.azimuth_step,
+                    cp.azimuth_step):
+                for j in np.arange(cp.zenith_min_offset, cp.zenith_max_offset + cp.zenith_step,
+                        cp.zenith_step):
+                    offsets.append((i,j))
+        else:
+            offsets: List[Tuple[float, float]] = \
+                [(i, 0) for i in np.arange(cp.azimuth_min_offset, cp.azimuth_max_offset +
+                    cp.azimuth_step, cp.azimuth_step)]
+            offsets += [(0, i) for i in np.arange(cp.zenith_min_offset, cp.zenith_max_offset +
+                cp.zenith_step, cp.zenith_step)]
+        self.steps = offsets
+        self.measured_steps = 0
+        self.update_info_steps()
 
     @QtCore.Slot()
     def press_start_cross(self):
@@ -490,6 +572,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(True)
         self.log_handler.start_handler()
         self.log_countdown_label.setVisible(True)
+        self.step_info_set_visible(True)
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
         option = _CROSS_LOGTITLE
@@ -505,6 +588,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             rest = self.rest_input.value()
             cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
                 countdown, rest)
+            self.generate_steps(cp)
             altitude = self.session_status.height
             self.logger = get_custom_logger(self.logfile, self.log_handlers)
             if self.body == BodyEnum.SUN:

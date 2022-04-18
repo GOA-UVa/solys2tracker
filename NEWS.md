@@ -6,3 +6,4 @@
 
 - Height is set in configuration.
 - Using solys v0.2.1a1.
+- Cross/Mesh informs the user of next step and number of remaining steps.
