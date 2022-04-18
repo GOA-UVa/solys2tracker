@@ -8,12 +8,11 @@ It exports the following classes:
 """
 
 """___Built-In Modules___"""
-from typing import Tuple, List
+from typing import List
 from enum import Enum
 
 """___Third-Party Modules___"""
-from PySide2 import QtWidgets, QtCore, QtGui
-from solys2 import solys2 as s2
+from PySide2 import QtWidgets
 
 """___Solys2Tracker Modules___"""
 try:
@@ -23,7 +22,7 @@ try:
     from solys2tracker.common import add_spacer
     from solys2tracker.bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
     from solys2tracker.configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
-        AdjustWidget
+        AdjustWidget, PositionWidget, OtherWidget
 except:
     import ifaces
     import noconflict
