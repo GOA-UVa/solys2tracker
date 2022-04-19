@@ -784,6 +784,8 @@ class PositionWidget(QtWidgets.QWidget):
         self.input_layout = QtWidgets.QHBoxLayout()
         self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
         self.az_sending_position = QtWidgets.QDoubleSpinBox()
+        self.az_sending_position.setMinimum(-1)
+        self.ze_sending_position.setMaximum(361)
         self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
         self.ze_sending_position = QtWidgets.QDoubleSpinBox()
         self.ze_sending_position.setMinimum(-4)

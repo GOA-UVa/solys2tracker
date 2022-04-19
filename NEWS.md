@@ -10,3 +10,5 @@
 - Removed minimum size, now it's just initial size.
 
 - Added missing imports
+
+- Changed Set Position Azimuth maximum and minimum.
