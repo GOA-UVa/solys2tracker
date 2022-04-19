@@ -785,7 +785,7 @@ class PositionWidget(QtWidgets.QWidget):
         self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
         self.az_sending_position = QtWidgets.QDoubleSpinBox()
         self.az_sending_position.setMinimum(-1)
-        self.ze_sending_position.setMaximum(361)
+        self.az_sending_position.setMaximum(361)
         self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
         self.ze_sending_position = QtWidgets.QDoubleSpinBox()
         self.ze_sending_position.setMinimum(-4)
@@ -961,7 +961,6 @@ class PositionWidget(QtWidgets.QWidget):
         self.message_l.setText(msg)
         self.message_l.setStyleSheet("background-color: {}".format(label_color))
         self.message_l.repaint()
-
 
 class OtherWidget(QtWidgets.QWidget):
     def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):

@@ -14,3 +14,5 @@
 - Changed Set Position Azimuth maximum and minimum.
 - Set position input now has the current value initially.
 - Save log folder fixed.
+
+- Fixed bug with position widget
