@@ -491,7 +491,7 @@ class LogWidget(QtWidgets.QWidget):
     def save_directory(self):
         self.session_status.logfolder = self.log_folder
         try:
-            self.session_status.save_logfile_data()
+            self.session_status.save_logfolder_data()
         except:
             msg = "Error saving the logging directory data"
             label_color = constants.COLOR_RED
@@ -866,6 +866,8 @@ class PositionWidget(QtWidgets.QWidget):
     def _update_position_labels(self, az: float, ze: float):
         self.az_curr_pos.setText(str(az))
         self.ze_curr_pos.setText(str(ze))
+        self.az_sending_position.setValue(az)
+        self.ze_sending_position.setValue(ze)
     
     def thread_finished(self):
         self.az_sending_position.setDisabled(False)
