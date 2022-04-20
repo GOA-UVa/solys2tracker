@@ -557,10 +557,12 @@ class AdjustWidget(QtWidgets.QWidget):
         self.az_extra_adjustment = QtWidgets.QDoubleSpinBox()
         self.az_extra_adjustment.setMinimum(-0.2)
         self.az_extra_adjustment.setMaximum(0.2)
+        self.az_extra_adjustment.setSingleStep(0.01)
         self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
         self.ze_extra_adjustment = QtWidgets.QDoubleSpinBox()
         self.ze_extra_adjustment.setMinimum(-0.2)
         self.ze_extra_adjustment.setMaximum(0.2)
+        self.ze_extra_adjustment.setSingleStep(0.01)
         add_spacer(self.adjust_layout, self.h_spacers)
         self.input_layout.addWidget(self.az_label_input, 1)
         add_spacer(self.input_layout, self.h_spacers)
@@ -635,8 +637,8 @@ class AdjustWidget(QtWidgets.QWidget):
         self.th.start()
 
     def _update_adjustment_labels(self, az: float, ze: float):
-        self.az_curr_adjustment.setText(str(az))
-        self.ze_curr_adjustment.setText(str(ze))
+        self.az_curr_adjustment.setText("{:+.4f}".format(az))
+        self.ze_curr_adjustment.setText("{:+.4f}".format(ze))
     
     def thread_finished(self):
         self.az_extra_adjustment.setDisabled(False)

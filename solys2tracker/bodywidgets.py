@@ -462,7 +462,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.step_info_lay = QtWidgets.QHBoxLayout()
         self.next_step_label = QtWidgets.QLabel("Next step:", alignment=QtCore.Qt.AlignCenter)
         self.next_step = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
-        self.remaining_steps_label = QtWidgets.QLabel("Remaining steps:", alignment=QtCore.Qt.AlignCenter)
+        self.remaining_steps_label = QtWidgets.QLabel("Performed steps:", alignment=QtCore.Qt.AlignCenter)
         self.rem_steps = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         add_spacer(self.step_info_lay, self.h_spacers)
         self.step_info_lay.addWidget(self.next_step_label)
@@ -532,7 +532,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.next_step.setText("A{:+.2f}; Z{:+.2f}".format(next_offset[0], next_offset[1]))
         else:
             self.next_step.setText("Finished")
-        self.rem_steps.setText("{}".format(len(self.steps)-self.measured_steps))
+        self.rem_steps.setText("{}/{}".format(self.measured_steps, len(self.steps)))
 
     def next_step_detected(self):
         self.measured_steps += 1
