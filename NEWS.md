@@ -18,5 +18,5 @@
 - Fixed bug with position widget
 
 - Adjust step set to 0.01.
-- Cross/Mesh now sais performed steps instead of remaining steps.
+- Cross/Mesh now says performed steps instead of remaining steps.
 - Current adjustment label rounded to fourth decimal.
