@@ -27,6 +27,9 @@ class SessionStatus:
     logfolder: str
     kernels_path: str
     height: int
+    asd_ip: str
+    asd_port: int
+    asd_folder: str
 
     def __post_init__(self):
         if self.ip is None:
@@ -45,6 +48,12 @@ class SessionStatus:
             self.kernels_path = self._get_kernels_path_data()
         if self.height is None:
             self.height = self._get_height_data()
+        if self.asd_ip is None:
+            self.asd_ip = self._get_asd_ip_data()
+        if self.asd_port is None:
+            self.asd_port = self._get_asd_port_data()
+        if self.asd_folder is None:
+            self.asd_folder = self._get_asd_folder_data()
     
     def _get_ip_data(self) -> str:
         return localdata.get_value("ip")
@@ -61,6 +70,18 @@ class SessionStatus:
             return 0
         return int(height_str)
 
+    def _get_asd_ip_data(self) -> str:
+        return localdata.get_value("asd_ip")
+
+    def _get_asd_port_data(self) -> int:
+        port = localdata.get_value("asd_port")
+        if port == "":
+            return 0
+        return int(port)
+
+    def _get_asd_folder_data(self) -> str:
+        return localdata.get_value("asd_folder")
+
     def save_ip_data(self):
         localdata.save_value("ip", self.ip)
     
@@ -72,6 +93,15 @@ class SessionStatus:
 
     def save_height_data(self):
         localdata.save_value("height", self.height)
+    
+    def save_asd_ip_data(self):
+        localdata.save_value("asd_ip", self.asd_ip)
+
+    def save_asd_port_data(self):
+        localdata.save_value("asd_port", self.asd_port)
+
+    def save_asd_folder_data(self):
+        localdata.save_value("asd_folder", self.asd_folder)
 
 class BodyEnum(Enum):
     SUN = 0

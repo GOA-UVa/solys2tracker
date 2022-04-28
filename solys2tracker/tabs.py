@@ -22,7 +22,7 @@ try:
     from solys2tracker.common import add_spacer
     from solys2tracker.bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
     from solys2tracker.configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
-        AdjustWidget, PositionWidget, OtherWidget
+        AdjustWidget, PositionWidget, OtherWidget, ASDWidget
 except:
     import ifaces
     import noconflict
@@ -30,7 +30,7 @@ except:
     from common import add_spacer
     from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
     from configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
-        AdjustWidget, PositionWidget, OtherWidget
+        AdjustWidget, PositionWidget, OtherWidget, ASDWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -142,6 +142,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
         ADJUST = 3
         MOVE_POS = 4
         OTHER = 5
+        ASD = 6
 
     def _change_tab(self, page: PageEnum):
         """
@@ -164,8 +165,10 @@ class ConfigurationWidget(QtWidgets.QWidget):
             self.content_w = AdjustWidget(self, self.session_status)
         elif page == ConfigurationWidget.PageEnum.MOVE_POS:
             self.content_w = PositionWidget(self, self.session_status)
-        else:
+        elif page == ConfigurationWidget.PageEnum.OTHER:
             self.content_w = OtherWidget(self, self.session_status)
+        else:
+            self.content_w = ASDWidget(self, self.session_status)
         self.main_layout.addWidget(self.content_w, 1)
 
     def change_tab_connection(self) -> None:
@@ -203,6 +206,12 @@ class ConfigurationWidget(QtWidgets.QWidget):
         Change the tab to the OTHER tab.
         """
         self._change_tab(ConfigurationWidget.PageEnum.OTHER)
+
+    def change_tab_asd(self) -> None:
+        """
+        Change the tab to the ASD tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.ASD)
 
 class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """

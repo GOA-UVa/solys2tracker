@@ -9,3 +9,4 @@ solys2>=0.2.1
 spicedmoon>=0.1.3
 spicedsun>=0.0.2
 spiceypy>=5.0.0
+asdcontroller>=0.0.1

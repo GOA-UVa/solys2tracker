@@ -20,3 +20,5 @@
 - Adjust step set to 0.01.
 - Cross/Mesh now says performed steps instead of remaining steps.
 - Current adjustment label rounded to fourth decimal.
+
+- Data from the ASD is saved in config tab.

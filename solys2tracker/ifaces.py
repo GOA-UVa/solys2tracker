@@ -218,3 +218,10 @@ class IConfigWidget(ABC):
         Change the tab to the OTHER tab.
         """
         pass
+
+    @abstractmethod
+    def change_tab_asd(self) -> None:
+        """
+        Change the tab to the ASD tab.
+        """
+        pass

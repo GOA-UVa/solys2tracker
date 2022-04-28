@@ -99,6 +99,9 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         self.other_but = QtWidgets.QPushButton("Other")
         self.other_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.other_but.clicked.connect(self.press_other)
+        self.other_but = QtWidgets.QPushButton("ASD")
+        self.other_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.other_but.clicked.connect(self.press_asd)
         self.main_layout = QtWidgets.QVBoxLayout(self)
         add_spacer(self.main_layout, self.h_spacers)
         self.main_layout.addWidget(self.conn_but, 1)
@@ -163,6 +166,11 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
     def press_other(self):
         """Press the OTHER button."""
         self.config_w.change_tab_other()
+
+    @QtCore.Slot()
+    def press_asd(self):
+        """Press the ASD button."""
+        self.config_w.change_tab_asd()
 
 class ConnectionWidget(QtWidgets.QWidget):
     """
@@ -1030,6 +1038,132 @@ class OtherWidget(QtWidgets.QWidget):
         self.session_status.height = self.height_input.value()
         try:
             self.session_status.save_height_data()
+        except:
+            msg = "Error saving the data"
+            label_color = constants.COLOR_RED
+        else:
+            msg = "Saved successfully"
+            label_color = constants.COLOR_GREEN
+        finally:
+            self.message_l.setText(msg)
+            self.message_l.setStyleSheet("background-color: {}".format(label_color))
+            self.message_l.repaint()
+
+class ASDWidget(QtWidgets.QWidget):
+    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+        """
+        Parameters
+        ----------
+        config_w : IConfigWidget
+            Parent widget that contains the configuration page.
+        session_status : SessionStatus
+            Current status of the GUI connection with the Solys2.
+        """
+        super().__init__()
+        self.title_str = "Configuration | ASD"
+        self.config_w = config_w
+        self.session_status = session_status
+        self._build_layout()
+
+    def _build_layout(self):
+        self.v_spacers = []
+        self.h_spacers = []
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        # Title
+        self.title = QtWidgets.QLabel(self.title_str, alignment=QtCore.Qt.AlignCenter)
+        self.title.setObjectName("section_title")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.title)
+        # Input
+        self.input_layout = QtWidgets.QVBoxLayout()
+        # Ip input (Row 1)
+        self.lay_ip = QtWidgets.QHBoxLayout()
+        self.ip_label = QtWidgets.QLabel("IP:", alignment=QtCore.Qt.AlignCenter)
+        self.ip_input = QtWidgets.QLineEdit(self.session_status.asd_ip)
+        add_spacer(self.lay_ip, self.h_spacers)
+        self.lay_ip.addWidget(self.ip_label)
+        add_spacer(self.lay_ip, self.h_spacers)
+        self.lay_ip.addWidget(self.ip_input)
+        add_spacer(self.lay_ip, self.h_spacers)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_ip)
+        # Port input (Row 2)
+        self.lay_port = QtWidgets.QHBoxLayout()
+        self.port_label = QtWidgets.QLabel("Port:", alignment=QtCore.Qt.AlignCenter)
+        self.port_input = QtWidgets.QSpinBox()
+        prev_port = self.session_status.asd_port
+        if prev_port is None:
+            prev_port = 8080
+        self.port_input.setValue(prev_port)
+        add_spacer(self.lay_port, self.h_spacers)
+        self.lay_port.addWidget(self.port_label)
+        add_spacer(self.lay_port, self.h_spacers)
+        self.lay_port.addWidget(self.port_input)
+        add_spacer(self.lay_port, self.h_spacers)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_port)
+        # Folder input (Row 3)
+        self.lay_folder = QtWidgets.QVBoxLayout()
+        self.lay_folder_input = QtWidgets.QHBoxLayout()
+        self.select_label = QtWidgets.QLabel("ASD directory:", alignment=QtCore.Qt.AlignCenter)
+        self.select_btn = QtWidgets.QPushButton("Select folder")
+        self.select_btn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.select_btn.clicked.connect(self.open_file_dialog)
+        self.asd_folder = self.session_status.asd_folder
+        self.dir_str = self.asd_folder
+        if self.dir_str == "":
+            self.dir_str = "No directory selected"
+        elif self.dir_str == ".":
+            self.dir_str = "Using current execution directory"
+        self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
+        add_spacer(self.lay_folder_input, self.h_spacers)
+        self.lay_folder_input.addWidget(self.select_label)
+        add_spacer(self.lay_folder_input, self.h_spacers)
+        self.lay_folder_input.addWidget(self.select_btn)
+        add_spacer(self.lay_folder_input, self.h_spacers)
+        add_spacer(self.lay_folder, self.v_spacers)
+        self.lay_folder.addLayout(self.lay_folder_input)
+        add_spacer(self.lay_folder, self.v_spacers)
+        self.lay_folder.addWidget(self.selected_label)
+        add_spacer(self.lay_folder, self.v_spacers)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_folder)
+        # Finish input
+        add_spacer(self.input_layout, self.v_spacers)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.input_layout)
+        # Message
+        self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
+        self.message_l.setObjectName("message")
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.message_l)
+        # Save button
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.save_button.clicked.connect(self.save_values)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.save_button)
+        # Finish main layout
+        add_spacer(self.main_layout, self.v_spacers)
+
+    @QtCore.Slot()
+    def open_file_dialog(self):
+        dlg = QtWidgets.QFileDialog()
+        dlg.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+        if dlg.exec_():
+            folderpaths = dlg.selectedFiles()
+            self.asd_folder = folderpaths[0]
+            self.selected_label.setText(self.asd_folder)
+
+    @QtCore.Slot()
+    def save_values(self):
+        self.session_status.asd_ip = self.ip_input.text()
+        self.session_status.asd_port = self.port_input.value()
+        self.session_status.asd_folder = self.asd_folder
+        try:
+            self.session_status.save_asd_ip_data()
+            self.session_status.save_asd_port_data()
+            self.session_status.save_asd_folder_data()
         except:
             msg = "Error saving the data"
             label_color = constants.COLOR_RED

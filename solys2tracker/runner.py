@@ -121,7 +121,8 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         super().__init__()
         self.kernel_path = kernel_path
         self.is_connected = False
-        self.session_status = SessionStatus(None, None, None, False, None, None, None)
+        self.session_status = SessionStatus(None, None, None, False, None, None, None,
+            None, None, None)
         self.can_close = True
         self._build_layout()
     
