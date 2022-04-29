@@ -24,6 +24,7 @@ from solys2.automation import calibration as cali
 from solys2.automation import positioncalc as psc
 from solys2 import common
 import numpy as np
+from asdcontroller import asd_controller as asdc, asd_types as asdt
 
 """___Solys2Tracker Modules___"""
 try:
@@ -331,6 +332,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.title_str = self.title_str + " | " + self.op_name
         self.session_status = session_status
         self.kernels_path = kernels_path
+        self.call_asd = False
         self._build_layout()
 
     class QLabelCrossCountdownLogger(logging.Handler):
@@ -440,7 +442,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.countdown_input = QtWidgets.QSpinBox()
         self.countdown_input.setMinimum(-100)
         self.countdown_input.setMaximum(100)
-        self.countdown_input.setValue(3)
+        self.countdown_input.setValue(1)
         add_spacer(self.countdown_layout, self.h_spacers)
         self.countdown_layout.addWidget(self.countdown_label)
         add_spacer(self.countdown_layout, self.h_spacers)
@@ -486,6 +488,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handler = LoggerDialog()
         self.log_handlers += [self.log_handler.get_handler()]
         self.log_handler.setVisible(False)
+        # ASD Checkbox
+        self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
+        self.asd_checkbox.setChecked(True)
         # Start button
         self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -510,6 +515,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.content_layout.addWidget(self.log_countdown_label)
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.log_handler)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addWidget(self.asd_checkbox)
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.start_button)
         add_spacer(self.content_layout, self.v_spacers)
@@ -557,6 +564,21 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.measured_steps = 0
         self.update_info_steps()
 
+    def asd_acquire(self):
+        spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
+        dt = datetime.utcnow()
+        filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
+        filename = path.join(self.session_status.asd_folder, filename)
+        with open(filename, 'w') as f:
+            f.write("it: {}".format(spec.fr_spectrum_header.v_header.it))
+            s1h = spec.fr_spectrum_header.s1_header
+            f.write("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset))
+            s2h = spec.fr_spectrum_header.s2_header
+            f.write("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset))
+            for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN):
+                f.write("{} {}".format(i, spec.spec_buffer[i]))
+            f.close()
+
     @QtCore.Slot()
     def press_start_cross(self):
         """
@@ -575,6 +597,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.step_info_set_visible(True)
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
+        self.asd_checkbox.setDisabled(True)
+        self.call_asd = self.asd_checkbox.isChecked()
         option = _CROSS_LOGTITLE
         if self.is_mesh:
             option = _MESH_LOGTITLE
@@ -591,26 +615,34 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.generate_steps(cp)
             altitude = self.session_status.height
             self.logger = get_custom_logger(self.logfile, self.log_handlers)
+
+            callback = None
+            if self.call_asd:
+                self.asd_ctr = asdc.ASDController(self.session_status.asd_ip, self.session_status.asd_port)
+                self.asd_ctr.restore()
+                self.asd_ctr.optimize()
+                callback = self.asd_acquire
+
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
+                args = [cs.ip, cp, library, self.logger, cs.port,
+                        cs.password, altitude, self.kernels_path]
                 if self.is_mesh:
-                    self.crosser = cali.SolarMesh(cs.ip, cp, library, self.logger, cs.port,
-                        cs.password, altitude, self.kernels_path)
+                    self.crosser = cali.SolarMesh(*args, inst_callback=callback)
                 else:
-                    self.crosser = cali.SolarCross(cs.ip, cp, library, self.logger, cs.port,
-                        cs.password, altitude, self.kernels_path)
+                    self.crosser = cali.SolarCross(*args, inst_callback=callback)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
+                args = [cs.ip, cp, library, self.logger, cs.port,
+                        cs.password, altitude, self.kernels_path]
                 if self.is_mesh:
-                    self.crosser = cali.LunarMesh(cs.ip, cp, library, self.logger, cs.port,
-                        cs.password, altitude, self.kernels_path)
+                    self.crosser = cali.LunarMesh(*args, inst_callback=callback)
                 else:
-                    self.crosser = cali.LunarCross(cs.ip, cp, library, self.logger, cs.port,
-                        cs.password, altitude, self.kernels_path)
+                    self.crosser = cali.LunarCross(*args, inst_callback=callback)
             self.crosser.start()
             self.cancel_button.setVisible(True)
             self.start_checking_cross_end()
@@ -671,6 +703,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.countdown_input.setDisabled(False)
         self.rest_input.setDisabled(False)
         self.body_tab.set_disabled_navbar(False)
+        self.asd_checkbox.setDisabled(False)
 
 class BodyBlackWidget(QtWidgets.QWidget):
     """

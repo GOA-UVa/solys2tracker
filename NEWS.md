@@ -22,3 +22,4 @@
 - Current adjustment label rounded to fourth decimal.
 
 - Data from the ASD is saved in config tab.
+- It should work with the ASD.
