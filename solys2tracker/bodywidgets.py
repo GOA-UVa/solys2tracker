@@ -618,11 +618,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
 
             callback = None
             if self.call_asd:
-                self.asd_ctr = asdc.ASDController(self.session_status.asd_ip, self.session_status.asd_port)
-                self.asd_ctr.restore()
-                self.asd_ctr.optimize()
                 callback = self.asd_acquire
-
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
@@ -643,12 +639,20 @@ class BodyCrossWidget(QtWidgets.QWidget):
                     self.crosser = cali.LunarMesh(*args, inst_callback=callback)
                 else:
                     self.crosser = cali.LunarCross(*args, inst_callback=callback)
-            self.crosser.start()
-            self.cancel_button.setVisible(True)
-            self.start_checking_cross_end()
-        except:
+
+            if self.call_asd:
+                self.connect_asd_then_start()
+            else:
+                self.start_cross()
+        except Exception as e:
+            self.logger.error(e)
             self.finished_crossing()
     
+    def start_cross(self):
+        self.crosser.start()
+        self.cancel_button.setVisible(True)
+        self.start_checking_cross_end()
+
     class CrossWorker(QtCore.QObject):
         """
         Worker that will check for the cross to finish.
@@ -680,6 +684,45 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.worker.finished.connect(self.finished_crossing)
         self.th.finished.connect(self.th.deleteLater)
         self.th.start()
+
+    class ConnectASDWorker(QtCore.QObject):
+        finished = QtCore.Signal()
+        exception = QtCore.Signal(Exception)
+
+        def __init__(self, cross_widget: 'BodyCrossWidget', ip: str, port: int):
+            super().__init__()
+            self.cross_widget = cross_widget
+            self.ip = ip
+            self.port = port
+        
+        def run(self):
+            try:
+                self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
+                self.cross_widget.asd_ctr.restore()
+                self.cross_widget.asd_ctr.optimize()
+                self.finished.emit()
+            except Exception as e:
+                self.exception.emit(e)
+
+    def exception_connecting_asd(self, e: Exception):
+        self.logger.error(e)
+        self.finished_crossing()
+
+    def connect_asd_then_start(self):
+        self.asd_th = QtCore.QThread()
+        self.asd_worker = BodyCrossWidget.ConnectASDWorker(self, self.session_status.asd_ip,
+            self.session_status.asd_port)
+        self.asd_worker.moveToThread(self.asd_th)
+        self.asd_th.started.connect(self.asd_worker.run)
+        self.asd_worker.finished.connect(self.asd_th.quit)
+        self.asd_worker.finished.connect(self.asd_worker.deleteLater)
+        self.asd_worker.finished.connect(self.start_cross)
+        self.asd_worker.exception.connect(self.asd_th.quit)
+        self.asd_worker.exception.connect(self.asd_worker.deleteLater)
+        self.asd_worker.exception.connect(self.exception_connecting_asd)
+        self.asd_th.finished.connect(self.asd_th.deleteLater)
+        self.logger.info("Connecting to ASD...")
+        self.asd_th.start()
 
     @QtCore.Slot()
     def cancel_button_press(self):

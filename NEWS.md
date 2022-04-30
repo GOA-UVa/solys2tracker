@@ -23,3 +23,5 @@
 
 - Data from the ASD is saved in config tab.
 - It should work with the ASD.
+- Connection with ASD smoother, doesn't block GUI.
+- Cross/Mesh informs about errors.
