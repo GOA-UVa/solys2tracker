@@ -333,6 +333,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.session_status = session_status
         self.kernels_path = kernels_path
         self.call_asd = False
+        self.asd_ctr: asdc.ASDController = None
         self._build_layout()
 
     class QLabelCrossCountdownLogger(logging.Handler):
@@ -747,6 +748,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.rest_input.setDisabled(False)
         self.body_tab.set_disabled_navbar(False)
         self.asd_checkbox.setDisabled(False)
+        if self.call_asd and self.asd_ctr is not None:
+            self.asd_ctr.close()
 
 class BodyBlackWidget(QtWidgets.QWidget):
     """

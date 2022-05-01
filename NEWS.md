@@ -25,3 +25,4 @@
 - It should work with the ASD.
 - Connection with ASD smoother, doesn't block GUI.
 - Cross/Mesh informs about errors.
+- ASD connection is closed after cross.
