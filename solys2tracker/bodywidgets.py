@@ -340,6 +340,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
         def __init__(self, label: QtWidgets.QLabel):
             super().__init__()
             self.widget = label
+            self.zero_msg = "MEASURE NOW"
+        
+        def set_zero_msg(self, zero_msg: str):
+            self.zero_msg = zero_msg
         
         def start_handler(self):
             self.worker = LogWorker()
@@ -367,7 +371,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 if num > 0:
                     label_msg = msg
                 else:
-                    label_msg = "MEASURE NOW"
+                    label_msg = self.zero_msg
             except:
                 label_msg = "ERROR"
             self.widget.setText(label_msg)
@@ -491,7 +495,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(False)
         # ASD Checkbox
         self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
-        self.asd_checkbox.setChecked(True)
+        if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
+            self.asd_checkbox.setChecked(True)
+        else:
+            self.asd_checkbox.setChecked(False)
         # Start button
         self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -596,6 +603,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handler.start_handler()
         self.log_countdown_label.setVisible(True)
         self.step_info_set_visible(True)
+        if self.call_asd:
+            self.log_countdown.set_zero_msg("MEASURING...")
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
         self.asd_checkbox.setDisabled(True)

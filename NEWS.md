@@ -26,3 +26,5 @@
 - Connection with ASD smoother, doesn't block GUI.
 - Cross/Mesh informs about errors.
 - ASD connection is closed after cross.
+- Change Cross/Mesh measuring message when using ASD.
+- Cross/Mesh ASD Pre-Checked when ASD ip is set.

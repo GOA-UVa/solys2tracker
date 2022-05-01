@@ -1091,8 +1091,10 @@ class ASDWidget(QtWidgets.QWidget):
         self.lay_port = QtWidgets.QHBoxLayout()
         self.port_label = QtWidgets.QLabel("Port:", alignment=QtCore.Qt.AlignCenter)
         self.port_input = QtWidgets.QSpinBox()
+        self.port_input.setMaximum(1000000)
+        self.port_input.setMinimum(1)
         prev_port = self.session_status.asd_port
-        if prev_port is None:
+        if prev_port is None or prev_port == 0:
             prev_port = 8080
         self.port_input.setValue(prev_port)
         add_spacer(self.lay_port, self.h_spacers)
