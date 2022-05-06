@@ -28,3 +28,5 @@
 - ASD connection is closed after cross.
 - Change Cross/Mesh measuring message when using ASD.
 - Cross/Mesh ASD Pre-Checked when ASD ip is set.
+
+- Using asdcontroller==0.0.3
