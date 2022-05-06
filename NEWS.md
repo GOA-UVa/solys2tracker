@@ -30,3 +30,5 @@
 - Cross/Mesh ASD Pre-Checked when ASD ip is set.
 
 - Using asdcontroller==0.0.3
+
+- Default countdown value depends on if the checkbox is initially checked or not.

@@ -298,6 +298,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.track_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)
 
+DEFAULT_VALUE_COUNTDOWN_AUTOMATIC = 1
+DEFAULT_VALUE_COUNTDOWN_MANUAL = 3
+
 class BodyCrossWidget(QtWidgets.QWidget):
     """
     Body page that contains the cross and mesh functionalities.
@@ -447,7 +450,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.countdown_input = QtWidgets.QSpinBox()
         self.countdown_input.setMinimum(-100)
         self.countdown_input.setMaximum(100)
-        self.countdown_input.setValue(1)
+        self.countdown_input.setValue(DEFAULT_VALUE_COUNTDOWN_MANUAL)
         add_spacer(self.countdown_layout, self.h_spacers)
         self.countdown_layout.addWidget(self.countdown_label)
         add_spacer(self.countdown_layout, self.h_spacers)
@@ -497,6 +500,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
         if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
             self.asd_checkbox.setChecked(True)
+            self.countdown_input.setValue(DEFAULT_VALUE_COUNTDOWN_AUTOMATIC)
         else:
             self.asd_checkbox.setChecked(False)
         # Start button
