@@ -29,5 +29,6 @@
 - Fixed bug when showing "MEASURING...", "MEASURE NOW" message.
 - Fixed error in asd_acquire callback in Cross/Mesh
 - Fixed the asd data printing format.
+- ASD data printing format now followes Fieldspec format for spanish language.
 
 ## News

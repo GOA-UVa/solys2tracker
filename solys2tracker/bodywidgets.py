@@ -587,8 +587,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
             print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
             s2h = spec.fr_spectrum_header.s2_header
             print("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset), file=f)
+            print("", file=f)
+            spec.to_npl_format()
             for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
-                print("{} {}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]), file=f)
+                print("{:.3f} {:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
             f.close()
 
     @QtCore.Slot()
