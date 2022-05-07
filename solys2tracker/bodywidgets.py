@@ -587,8 +587,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
             f.write("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset))
             s2h = spec.fr_spectrum_header.s2_header
             f.write("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset))
-            for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN):
-                f.write("{} {}".format(i, spec.spec_buffer[i]))
+            for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
+                f.write("{} {}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]))
             f.close()
 
     @QtCore.Slot()
@@ -607,12 +607,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handler.start_handler()
         self.log_countdown_label.setVisible(True)
         self.step_info_set_visible(True)
+        self.call_asd = self.asd_checkbox.isChecked()
         if self.call_asd:
             self.log_countdown.set_zero_msg("MEASURING...")
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
         self.asd_checkbox.setDisabled(True)
-        self.call_asd = self.asd_checkbox.isChecked()
         option = _CROSS_LOGTITLE
         if self.is_mesh:
             option = _MESH_LOGTITLE

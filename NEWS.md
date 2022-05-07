@@ -26,5 +26,7 @@
 - Cross/Mesh ASD Pre-Checked when ASD ip is set.
 - Using asdcontroller==0.0.3
 - Default countdown value depends on if the checkbox is initially checked or not.
+- Fixed bug when showing "MEASURING...", "MEASURE NOW" message.
+- Fixed error in asd_acquire callback in Cross/Mesh
 
 ## News
