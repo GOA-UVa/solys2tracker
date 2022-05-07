@@ -582,7 +582,8 @@ class BodyCrossWidget(QtWidgets.QWidget):
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
         with open(filename, 'w') as f:
-            print("it: {}".format(spec.fr_spectrum_header.v_header.it), file=f)
+            print("it: {}. Drift: {}".format(spec.fr_spectrum_header.v_header.it,
+                spec.fr_spectrum_header.v_header.drift), file=f)
             s1h = spec.fr_spectrum_header.s1_header
             print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
             s2h = spec.fr_spectrum_header.s2_header
@@ -590,7 +591,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             print("", file=f)
             spec.to_npl_format()
             for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
-                print("{:.3f} {:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
+                print("{:.3f}\t{:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
             f.close()
 
     @QtCore.Slot()

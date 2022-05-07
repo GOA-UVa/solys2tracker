@@ -30,5 +30,7 @@
 - Fixed error in asd_acquire callback in Cross/Mesh
 - Fixed the asd data printing format.
 - ASD data printing format now followes Fieldspec format for spanish language.
+- ASD data printing now prints more data.
+- ASD data printing now with tab instead of space.
 
 ## News
