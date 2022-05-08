@@ -721,6 +721,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.port = port
         
         def _start_tracking_body(self):
+            logger = get_custom_logger(self.cross_widget.logfile, [])
             cs = self.cross_widget.session_status
             kp = self.cross_widget.kernels_path
             seconds = 10
@@ -729,13 +730,13 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 library = psc.SunLibrary.SPICEDSUN
                 if kp is None or kp == "":
                     library = psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, None,
+                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, kp)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if kp is None or kp == "":
                     library = psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, None,
+                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, kp)
             self.tracker.start()
         
