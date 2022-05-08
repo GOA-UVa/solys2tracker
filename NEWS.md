@@ -35,5 +35,6 @@
 - Using asdcontroller==0.0.5
 - Using asdcontroller==0.0.6
 - Cross with ASD now tracks body temporarily.
+- Change order of instantiating Cross Widget crosser attribute.
 
 ## News

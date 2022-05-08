@@ -621,41 +621,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             option = _MESH_LOGTITLE
         self.logfile = _create_log_file_name(self.session_status.logfolder, option)
         try:
-            cs = self.session_status
-            az_min = ze_min = self.range_first_input.value()
-            az_max = ze_max = self.range_second_input.value()
-            az_step = ze_step = self.step_input.value()
-            countdown = self.countdown_input.value()
-            rest = self.rest_input.value()
-            cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
-                countdown, rest)
-            self.generate_steps(cp)
-            altitude = self.session_status.height
             self.logger = get_custom_logger(self.logfile, self.log_handlers)
-
-            callback = None
-            if self.call_asd:
-                callback = self.asd_acquire
-            if self.body == BodyEnum.SUN:
-                library = psc.SunLibrary.SPICEDSUN
-                if self.kernels_path is None or self.kernels_path == "":
-                    library = psc.SunLibrary.PYSOLAR
-                args = [cs.ip, cp, library, self.logger, cs.port,
-                        cs.password, altitude, self.kernels_path]
-                if self.is_mesh:
-                    self.crosser = cali.SolarMesh(*args, inst_callback=callback)
-                else:
-                    self.crosser = cali.SolarCross(*args, inst_callback=callback)
-            else:
-                library = psc.MoonLibrary.SPICEDMOON
-                if self.kernels_path is None or self.kernels_path == "":
-                    library = psc.MoonLibrary.EPHEM_MOON
-                args = [cs.ip, cp, library, self.logger, cs.port,
-                        cs.password, altitude, self.kernels_path]
-                if self.is_mesh:
-                    self.crosser = cali.LunarMesh(*args, inst_callback=callback)
-                else:
-                    self.crosser = cali.LunarCross(*args, inst_callback=callback)
 
             if self.call_asd:
                 self.connect_asd_then_start()
@@ -665,10 +631,52 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.logger.error(e)
             self.finished_crossing()
     
+    def initiate_crosser(self):
+        cs = self.session_status
+        az_min = ze_min = self.range_first_input.value()
+        az_max = ze_max = self.range_second_input.value()
+        az_step = ze_step = self.step_input.value()
+        countdown = self.countdown_input.value()
+        rest = self.rest_input.value()
+        cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
+            countdown, rest)
+        self.generate_steps(cp)
+        altitude = self.session_status.height
+
+        callback = None
+        if self.call_asd:
+            callback = self.asd_acquire
+        if self.body == BodyEnum.SUN:
+            library = psc.SunLibrary.SPICEDSUN
+            if self.kernels_path is None or self.kernels_path == "":
+                library = psc.SunLibrary.PYSOLAR
+            args = [cs.ip, cp, library, self.logger, cs.port,
+                    cs.password, altitude, self.kernels_path]
+            if self.is_mesh:
+                self.crosser = cali.SolarMesh(*args, inst_callback=callback)
+            else:
+                self.crosser = cali.SolarCross(*args, inst_callback=callback)
+        else:
+            library = psc.MoonLibrary.SPICEDMOON
+            if self.kernels_path is None or self.kernels_path == "":
+                library = psc.MoonLibrary.EPHEM_MOON
+            args = [cs.ip, cp, library, self.logger, cs.port,
+                    cs.password, altitude, self.kernels_path]
+            if self.is_mesh:
+                self.crosser = cali.LunarMesh(*args, inst_callback=callback)
+            else:
+                self.crosser = cali.LunarCross(*args, inst_callback=callback)
+
     def start_cross(self):
-        self.crosser.start()
-        self.cancel_button.setVisible(True)
-        self.start_checking_cross_end()
+        try:
+            self.initiate_crosser()
+        except Exception as e:
+            self.logger.error(e)
+            self.finished_crossing()
+        else:
+            self.crosser.start()
+            self.cancel_button.setVisible(True)
+            self.start_checking_cross_end()
 
     class CrossWorker(QtCore.QObject):
         """
@@ -735,7 +743,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             if not self.tracker.is_finished():
                 self.tracker.stop()
                 while not self.tracker.is_finished():
-                    time.sleep(0.2)
+                    time.sleep(1)
 
         def run(self):
             try:
@@ -744,6 +752,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 self.cross_widget.asd_ctr.restore()
                 self.cross_widget.asd_ctr.optimize()
                 self._stop_tracking_sync()
+                self.cross_widget.logger.info("Stopped tracking after optimization.")
                 self.finished.emit()
             except Exception as e:
                 self.exception.emit(e)
