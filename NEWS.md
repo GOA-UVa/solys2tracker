@@ -33,5 +33,6 @@
 - ASD data printing now prints more data.
 - ASD data printing now with tab instead of space.
 - Using asdcontroller==0.0.5
+- Using asdcontroller==0.0.6
 
 ## News
