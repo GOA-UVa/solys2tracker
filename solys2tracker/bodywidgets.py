@@ -712,11 +712,38 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.ip = ip
             self.port = port
         
+        def _start_tracking_body(self):
+            cs = self.cross_widget.session_status
+            kp = self.cross_widget.kernels_path
+            seconds = 10
+            altitude = cs.height
+            if self.cross_widget.body == BodyEnum.SUN:
+                library = psc.SunLibrary.SPICEDSUN
+                if kp is None or kp == "":
+                    library = psc.SunLibrary.PYSOLAR
+                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.cross_widget.logger,
+                    library, altitude, kp)
+            else:
+                library = psc.MoonLibrary.SPICEDMOON
+                if kp is None or kp == "":
+                    library = psc.MoonLibrary.EPHEM_MOON
+                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.cross_widget.logger,
+                    library, altitude, kp)
+            self.tracker.start()
+        
+        def _stop_tracking_sync(self):
+            if not self.tracker.is_finished():
+                self.tracker.stop()
+                while not self.tracker.is_finished():
+                    time.sleep(0.2)
+
         def run(self):
             try:
+                self._start_tracking_body()
                 self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
                 self.cross_widget.asd_ctr.restore()
                 self.cross_widget.asd_ctr.optimize()
+                self._stop_tracking_sync()
                 self.finished.emit()
             except Exception as e:
                 self.exception.emit(e)

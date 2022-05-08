@@ -34,5 +34,6 @@
 - ASD data printing now with tab instead of space.
 - Using asdcontroller==0.0.5
 - Using asdcontroller==0.0.6
+- Cross with ASD now tracks body temporarily.
 
 ## News
