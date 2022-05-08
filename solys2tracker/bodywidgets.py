@@ -729,13 +729,13 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 library = psc.SunLibrary.SPICEDSUN
                 if kp is None or kp == "":
                     library = psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.cross_widget.logger,
+                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, None,
                     library, altitude, kp)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if kp is None or kp == "":
                     library = psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.cross_widget.logger,
+                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, None,
                     library, altitude, kp)
             self.tracker.start()
         

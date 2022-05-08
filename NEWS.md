@@ -36,5 +36,6 @@
 - Using asdcontroller==0.0.6
 - Cross with ASD now tracks body temporarily.
 - Change order of instantiating Cross Widget crosser attribute.
+- Not sending logger to ConnectASDWorker Tracker, as it would close them when stopping the tracking.
 
 ## News
