@@ -189,9 +189,31 @@ class BodyTrackWidget(QtWidgets.QWidget):
         add_spacer(self.seconds_layout, self.h_spacers)
         self.seconds_layout.addWidget(self.seconds_input)
         add_spacer(self.seconds_layout, self.h_spacers)
+        # ASD Input
+        self.asd_input_layout = QtWidgets.QHBoxLayout()
+        # ASD Checkbox
+        self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
+        # ASD itime checkbox
+        self.asd_itime_checkbox = QtWidgets.QCheckBox("Use 544ms as integration time")
+        # Finish ASD Input
+        self.asd_checkbox.stateChanged.connect(self.asd_checkbox_changed)
+        if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
+            self.asd_checkbox.setChecked(True)
+            self.asd_itime_checkbox.setChecked(True)
+        else:
+            self.asd_checkbox.setChecked(False)
+            self.asd_checkbox.setDisabled(True)
+            self.asd_itime_checkbox.setChecked(False)
+            self.asd_itime_checkbox.setDisabled(True)
+        add_spacer(self.asd_input_layout, self.h_spacers)
+        self.asd_input_layout.addLayout(self.asd_checkbox)
+        add_spacer(self.asd_input_layout, self.h_spacers)
+        self.asd_input_layout.addLayout(self.asd_itime_checkbox)
         # Finish input
         add_spacer(self.input_layout, self.v_spacers)
         self.input_layout.addLayout(self.seconds_layout)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.asd_input_layout)
         add_spacer(self.input_layout, self.v_spacers)
         self.content_layout.addLayout(self.input_layout)
         # Logger
@@ -218,17 +240,30 @@ class BodyTrackWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
 
     @QtCore.Slot()
+    def asd_checkbox_changed(self):
+        using_asd = self.asd_checkbox.isChecked()
+        if using_asd:
+            self.asd_itime_checkbox.setDisabled(False)
+        else:
+            self.asd_itime_checkbox.setChecked(False)
+            self.asd_itime_checkbox.setDisabled(True)
+
+    @QtCore.Slot()
     def track_button_press(self):
         """
         Slot for the GUI action of pressing the start tracking button.
         """
         self.track_button.setEnabled(False)
+        self.asd_checkbox.setEnabled(False)
+        self.asd_itime_checkbox.setEnabled(False)
         self.body_tab.set_disabled_navbar(True)
         self.seconds_input.setDisabled(True)
         self.log_handler.setVisible(True)
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
         self.logfile = _create_log_file_name(self.session_status.logfolder, _TRACK_LOGTITLE)
+        self.call_asd = self.asd_checkbox.isChecked()
+        self.use_custom_itime = self.asd_itime_checkbox.isChecked()
         try:
             cs = self.session_status
             seconds = self.seconds_input.value()
@@ -297,6 +332,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.seconds_input.setDisabled(False)
         self.track_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)
+        if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
+            self.asd_checkbox.setEnabled(True)
+            self.asd_itime_checkbox.setEnabled(True)
 
 DEFAULT_VALUE_COUNTDOWN_AUTOMATIC = 1
 DEFAULT_VALUE_COUNTDOWN_MANUAL = 3
@@ -503,6 +541,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.countdown_input.setValue(DEFAULT_VALUE_COUNTDOWN_AUTOMATIC)
         else:
             self.asd_checkbox.setChecked(False)
+            self.asd_checkbox.setDisabled(True)
         # Start button
         self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
