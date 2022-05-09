@@ -248,6 +248,31 @@ class BodyTrackWidget(QtWidgets.QWidget):
             self.asd_itime_checkbox.setChecked(False)
             self.asd_itime_checkbox.setDisabled(True)
 
+    def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
+        self.asd_ctr = asdc.ASDController()
+        self.asd_ctr.restore()
+        self.asd_ctr.optimize()
+        if use_custom_itime:
+            self.asd_ctr.set_itime(custom_itime)
+
+    def asd_acquire(self):
+        spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
+        dt = datetime.utcnow()
+        filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
+        filename = path.join(self.session_status.asd_folder, filename)
+        with open(filename, 'w') as f:
+            print("it: {}. Drift: {}".format(spec.fr_spectrum_header.v_header.it,
+                spec.fr_spectrum_header.v_header.drift), file=f)
+            s1h = spec.fr_spectrum_header.s1_header
+            print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
+            s2h = spec.fr_spectrum_header.s2_header
+            print("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset), file=f)
+            print("", file=f)
+            spec.to_npl_format()
+            for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
+                print("{:.3f}\t{:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
+            f.close()
+
     @QtCore.Slot()
     def track_button_press(self):
         """
@@ -269,18 +294,26 @@ class BodyTrackWidget(QtWidgets.QWidget):
             seconds = self.seconds_input.value()
             altitude = cs.height
             self.logger = common.create_file_logger(self.logfile, self.log_handlers, logging.WARNING)
+
+            callback = None
+            if self.call_asd:
+                self.logger.info("Connecting to ASD...")
+                self._initiate_asd_ctr(self.use_custom_itime)
+                self.logger.info("Connected to ASD")
+                callback = self.asd_acquire
+
             if self.body == BodyEnum.SUN:
                 library = psc.SunLibrary.SPICEDSUN
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
                 self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
-                    library, altitude, self.kernels_path)
+                    library, altitude, self.kernels_path, inst_callback=callback, instrument_delay=4)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
-                    library, altitude, self.kernels_path)
+                    library, altitude, self.kernels_path, inst_callback=callback, instrument_delay=4)
             self.tracker.start()
             self.cancel_button.setVisible(True)
         except:
