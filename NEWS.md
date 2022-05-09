@@ -43,5 +43,6 @@
 - Using asdcontroller==0.0.10
 - Using solys2==0.2.2
 - Track option should capture ASD data if indicated.
+- Corrected track gui bug.
 
 ## News

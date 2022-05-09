@@ -206,9 +206,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
             self.asd_itime_checkbox.setChecked(False)
             self.asd_itime_checkbox.setDisabled(True)
         add_spacer(self.asd_input_layout, self.h_spacers)
-        self.asd_input_layout.addLayout(self.asd_checkbox)
+        self.asd_input_layout.addWidget(self.asd_checkbox)
         add_spacer(self.asd_input_layout, self.h_spacers)
-        self.asd_input_layout.addLayout(self.asd_itime_checkbox)
+        self.asd_input_layout.addWidget(self.asd_itime_checkbox)
         # Finish input
         add_spacer(self.input_layout, self.v_spacers)
         self.input_layout.addLayout(self.seconds_layout)
