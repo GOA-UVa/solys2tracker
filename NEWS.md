@@ -44,5 +44,6 @@
 - Using solys2==0.2.2
 - Track option should capture ASD data if indicated.
 - Corrected track gui bug.
+- BodyTrackWidget now doesnt get blocked initially when connecting, and the optimization is done pointing to the body.
 
 ## News

@@ -248,13 +248,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
             self.asd_itime_checkbox.setChecked(False)
             self.asd_itime_checkbox.setDisabled(True)
 
-    def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
-        self.asd_ctr = asdc.ASDController()
-        self.asd_ctr.restore()
-        self.asd_ctr.optimize()
-        if use_custom_itime:
-            self.asd_ctr.set_itime(custom_itime)
-
     def asd_acquire(self):
         spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
         dt = datetime.utcnow()
@@ -289,6 +282,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.logfile = _create_log_file_name(self.session_status.logfolder, _TRACK_LOGTITLE)
         self.call_asd = self.asd_checkbox.isChecked()
         self.use_custom_itime = self.asd_itime_checkbox.isChecked()
+        instrument_delay = 5
         try:
             cs = self.session_status
             seconds = self.seconds_input.value()
@@ -297,9 +291,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
 
             callback = None
             if self.call_asd:
-                self.logger.info("Connecting to ASD...")
-                self._initiate_asd_ctr(self.use_custom_itime)
-                self.logger.info("Connected to ASD")
                 callback = self.asd_acquire
 
             if self.body == BodyEnum.SUN:
@@ -307,17 +298,98 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
                 self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
-                    library, altitude, self.kernels_path, inst_callback=callback, instrument_delay=4)
+                    library, altitude, self.kernels_path, inst_callback=callback,
+                    instrument_delay=instrument_delay)
             else:
                 library = psc.MoonLibrary.SPICEDMOON
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
-                    library, altitude, self.kernels_path, inst_callback=callback, instrument_delay=4)
-            self.tracker.start()
-            self.cancel_button.setVisible(True)
+                    library, altitude, self.kernels_path, inst_callback=callback,
+                    instrument_delay=instrument_delay)
+            if self.call_asd:
+                self.connect_asd_then_start()
+            else:
+                self.start_tracker()
         except:
             self.finished_tracking()
+
+    def start_tracker(self):
+        self.tracker.start()
+        self.cancel_button.setVisible(True)
+
+    class ConnectASDWorker(QtCore.QObject):
+        finished = QtCore.Signal()
+        exception = QtCore.Signal(Exception)
+
+        def __init__(self, track_widget: 'BodyTrackWidget', ip: str, port: int):
+            super().__init__()
+            self.track_widget = track_widget
+            self.ip = ip
+            self.port = port
+        
+        def _start_tracking_body(self):
+            logger = get_custom_logger(self.track_widget.logfile, [])
+            cs = self.track_widget.session_status
+            kp = self.track_widget.kernels_path
+            seconds = 10
+            altitude = cs.height
+            if self.track_widget.body == BodyEnum.SUN:
+                library = psc.SunLibrary.SPICEDSUN
+                if kp is None or kp == "":
+                    library = psc.SunLibrary.PYSOLAR
+                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
+                    library, altitude, kp)
+            else:
+                library = psc.MoonLibrary.SPICEDMOON
+                if kp is None or kp == "":
+                    library = psc.MoonLibrary.EPHEM_MOON
+                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
+                    library, altitude, kp)
+            self.tracker.start()
+        
+        def _stop_tracking_sync(self):
+            if not self.tracker.is_finished():
+                self.tracker.stop()
+                while not self.tracker.is_finished():
+                    time.sleep(1)
+        
+        def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
+            self.track_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
+            self.track_widget.asd_ctr.restore()
+            self.track_widget.asd_ctr.optimize()
+            if use_custom_itime:
+                self.track_widget.asd_ctr.set_itime(custom_itime)
+
+        def run(self):
+            try:
+                self._start_tracking_body()
+                self._initiate_asd_ctr(self.track_widget.use_custom_itime)
+                self._stop_tracking_sync()
+                self.track_widget.logger.info("Stopped tracking after optimization.")
+                self.finished.emit()
+            except Exception as e:
+                self.exception.emit(e)
+
+    def exception_connecting_asd(self, e: Exception):
+        self.logger.error(e)
+        self.finished_tracking()
+
+    def connect_asd_then_start(self):
+        self.asd_th = QtCore.QThread()
+        self.asd_worker = BodyTrackWidget.ConnectASDWorker(self, self.session_status.asd_ip,
+            self.session_status.asd_port)
+        self.asd_worker.moveToThread(self.asd_th)
+        self.asd_th.started.connect(self.asd_worker.run)
+        self.asd_worker.finished.connect(self.asd_th.quit)
+        self.asd_worker.finished.connect(self.asd_worker.deleteLater)
+        self.asd_worker.finished.connect(self.start_tracker)
+        self.asd_worker.exception.connect(self.asd_th.quit)
+        self.asd_worker.exception.connect(self.asd_worker.deleteLater)
+        self.asd_worker.exception.connect(self.exception_connecting_asd)
+        self.asd_th.finished.connect(self.asd_th.deleteLater)
+        self.logger.info("Connecting to ASD...")
+        self.asd_th.start()
 
     class TrackFinisherWorker(QtCore.QObject):
         """
