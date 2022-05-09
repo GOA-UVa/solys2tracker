@@ -38,7 +38,10 @@
 - Change order of instantiating Cross Widget crosser attribute.
 - Not sending logger to ConnectASDWorker Tracker, as it would close them when stopping the tracking.
 - ConnectASDWorker Tracker has logger that logs only to the logfile.
+
+## 0.2.1
 - Using asdcontroller==0.0.10
 - Using solys2==0.2.2
+- Track option should capture ASD data if indicated.
 
 ## News
