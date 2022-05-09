@@ -31,12 +31,12 @@ try:
     from solys2tracker.s2ttypes import SessionStatus, BodyEnum
     from solys2tracker import constants
     from solys2tracker import ifaces
-    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
+    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWidget
 except:
     import constants
     import ifaces
     from s2ttypes import SessionStatus, BodyEnum
-    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker
+    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -221,6 +221,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.content_layout.addWidget(self.log_handler)
         self.log_handlers = [self.log_handler.get_handler()]
         self.log_handler.setVisible(False)
+        # Graph
+        self.graph = GraphWidget()
+        self.graph.setVisible(False)
         # Finish content
         self.track_button = QtWidgets.QPushButton("Start")
         self.track_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -253,6 +256,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         dt = datetime.utcnow()
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
+        x_data = [i for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN+1)]
+        y_data = spec.spec_buffer
+        self.graph.update_plot(x_data, y_data)
         with open(filename, 'w') as f:
             print("it: {}. Drift: {}".format(spec.fr_spectrum_header.v_header.it,
                 spec.fr_spectrum_header.v_header.drift), file=f)
@@ -375,6 +381,11 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.logger.error(e)
         self.finished_tracking()
 
+    def initialize_graph(self):
+        self.graph.setVisible(True)
+        self.graph.show()
+        self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
+
     def connect_asd_then_start(self):
         self.asd_th = QtCore.QThread()
         self.asd_worker = BodyTrackWidget.ConnectASDWorker(self, self.session_status.asd_ip,
@@ -389,6 +400,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.asd_worker.exception.connect(self.exception_connecting_asd)
         self.asd_th.finished.connect(self.asd_th.deleteLater)
         self.logger.info("Connecting to ASD...")
+        self.initialize_graph()
         self.asd_th.start()
 
     class TrackFinisherWorker(QtCore.QObject):

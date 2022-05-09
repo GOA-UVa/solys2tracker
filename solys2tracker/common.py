@@ -13,6 +13,9 @@ import string
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore
+from matplotlib.axes import Axes
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 """___Solys2Tracker Modules___"""
 # import here
@@ -99,6 +102,35 @@ class LoggerDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
 
     def get_handler(self) -> logging.Handler:
         return self.logTextBox
+
+
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes: Axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+class GraphWidget(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self._build_layout()
+
+    def _build_layout(self):
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.canvas = MplCanvas(self)
+        self.main_layout.addWidget(self.canvas)
+
+    def update_plot(self, x_data: list, y_data: list):
+        self.x_data = x_data
+        self.y_data = y_data
+        self.canvas.axes.cla()  # Clear the canvas.
+        self.canvas.axes.plot(self.x_data, self.y_data, "r")
+        self.canvas.draw()
+
+    def update_labels(self, title: str, xlabel: str, ylabel: str):
+        self.canvas.axes.set_title(title)
+        self.canvas.axes.set_xlabel(xlabel)
+        self.canvas.axes.set_ylabel(ylabel)
 
 def _gen_random_str(len: int) -> str:
     """
