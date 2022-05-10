@@ -9,5 +9,5 @@ solys2>=0.2.3
 spicedmoon>=1.0.1
 spicedsun>=0.0.2
 spiceypy>=5.0.0
-asdcontroller>=0.0.10
+asdcontroller>=0.0.11
 matplotlib>=3.5.2
