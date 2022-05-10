@@ -31,12 +31,14 @@ try:
     from solys2tracker.s2ttypes import SessionStatus, BodyEnum
     from solys2tracker import constants
     from solys2tracker import ifaces
-    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWindow
+    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, \
+        GraphWindow, filepathToStr, resource_path
 except:
     import constants
     import ifaces
     from s2ttypes import SessionStatus, BodyEnum
-    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWindow
+    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWindow, \
+        filepathToStr, resource_path
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -383,8 +385,8 @@ class BodyTrackWidget(QtWidgets.QWidget):
         # Graph
         self.graph = GraphWindow()
         self.graph.setWindowTitle(constants.APPLICATION_NAME)
-        self.graph.setStyleSheet(common.filepathToStr(constants.MAIN_QSS_PATH))
-        self.graph.setWindowIcon(QtGui.QIcon(common.resource_path(constants.ICON_PATH)))
+        self.graph.setStyleSheet(filepathToStr(constants.MAIN_QSS_PATH))
+        self.graph.setWindowIcon(QtGui.QIcon(resource_path(constants.ICON_PATH)))
         self.graph.show()
         self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
 

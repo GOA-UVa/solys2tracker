@@ -7,9 +7,8 @@ This module starts the Solys2Tracker GUI when executed.
 """___Built-In Modules___"""
 from enum import Enum
 from typing import Union, List
-from pathlib import Path
 import sys
-from os import path as os_path, system as os_system, getpid as os_getpid, kill as os_kill
+from os import getpid as os_getpid, kill as os_kill
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui

@@ -57,5 +57,6 @@
 - ASD Output format track changed.
 - Fixed closing of graph window.
 - to npl format before showing it into the graph.
+- Fixed import bugs.
 
 ## News
