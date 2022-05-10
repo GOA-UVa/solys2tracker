@@ -55,5 +55,7 @@
 - Using asdcontroller==0.0.11
 - drift substracted
 - ASD Output format track changed.
+- Fixed closing of graph window.
+- to npl format before showing it into the graph.
 
 ## News

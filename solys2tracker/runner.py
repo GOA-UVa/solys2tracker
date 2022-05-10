@@ -21,12 +21,14 @@ try:
     from solys2tracker import noconflict
     from solys2tracker.tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
     from solys2tracker.s2ttypes import SessionStatus
+    from solys2tracker.common import resource_path, filepathToStr
 except:
     import constants
     import ifaces
     import noconflict
     from tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
     from s2ttypes import SessionStatus
+    from common import resource_path, filepathToStr
 
 class NavBarWidget(QtWidgets.QWidget):
     """
@@ -273,33 +275,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
         QtCore.QCoreApplication.quit()
         os_kill(os_getpid(), 9)
-
-def filepathToStr(filepath: str) -> str:
-    """Given filepath it returns its contents as a string
-
-    Parameters
-    ----------
-    filepath : str
-        relative path of the file to read
-
-    Returns
-    -------
-    content : str
-        Contents of the file as a str
-    """
-    data = ""
-    abs_path = str(Path(__file__).parent.absolute() / filepath)
-    try:
-        with open(abs_path) as styles:
-            data = styles.read()
-    except:
-        print("Error opening file", abs_path)
-    return data
-
-def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        return os_path.join(sys._MEIPASS, relative_path)
-    return os_path.join(os_path.abspath('.'), relative_path)
 
 def main():
     args = sys.argv[1:]

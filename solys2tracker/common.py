@@ -9,7 +9,10 @@ It exports the following functions:
 from typing import List
 import logging
 import random
+import sys
+from pathlib import Path
 import string
+from os import path as os_path, system as os_system, getpid as os_getpid, kill as os_kill
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -46,6 +49,33 @@ def add_spacer(layout: QtWidgets.QBoxLayout, spacers: List[QtWidgets.QSpacerItem
     spacer = QtWidgets.QSpacerItem(w, h)
     layout.addSpacerItem(spacer)
     spacers.append(spacer)
+
+def filepathToStr(filepath: str) -> str:
+    """Given filepath it returns its contents as a string
+
+    Parameters
+    ----------
+    filepath : str
+        relative path of the file to read
+
+    Returns
+    -------
+    content : str
+        Contents of the file as a str
+    """
+    data = ""
+    abs_path = str(Path(__file__).parent.absolute() / filepath)
+    try:
+        with open(abs_path) as styles:
+            data = styles.read()
+    except:
+        print("Error opening file", abs_path)
+    return data
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os_path.join(sys._MEIPASS, relative_path)
+    return os_path.join(os_path.abspath('.'), relative_path)
 
 class LogWorker(QtCore.QObject):
     data_ready = QtCore.Signal(str)
@@ -199,6 +229,8 @@ class GraphWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event: QtGui.QCloseEvent):
         if self.should_close:
             super().closeEvent(event)
+        else:
+            event.ignore()
     
     def force_close(self):
         self.should_close = True

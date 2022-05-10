@@ -251,6 +251,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
     def asd_acquire(self):
         spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
         dt = datetime.utcnow()
+        spec.to_npl_format()
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
         x_data = [i for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN+1)]
@@ -265,7 +266,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
             s2h = spec.fr_spectrum_header.s2_header
             print("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset), file=f)
             print("", file=f)
-            spec.to_npl_format()
             for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
                 print("{:.3f}\t{:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
             f.close()
@@ -382,6 +382,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
     def initialize_graph(self):
         # Graph
         self.graph = GraphWindow()
+        self.graph.setWindowTitle(constants.APPLICATION_NAME)
+        self.graph.setStyleSheet(common.filepathToStr(constants.MAIN_QSS_PATH))
+        self.graph.setWindowIcon(QtGui.QIcon(common.resource_path(constants.ICON_PATH)))
         self.graph.show()
         self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
 
