@@ -8,6 +8,7 @@ This module starts the Solys2Tracker GUI when executed.
 from enum import Enum
 from typing import Union, List
 import sys
+from pathlib import Path
 from os import getpid as os_getpid, kill as os_kill
 
 """___Third-Party Modules___"""
@@ -20,14 +21,14 @@ try:
     from solys2tracker import noconflict
     from solys2tracker.tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
     from solys2tracker.s2ttypes import SessionStatus
-    from solys2tracker.common import resource_path, filepathToStr
+    from solys2tracker.common import resource_path
 except:
     import constants
     import ifaces
     import noconflict
     from tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
     from s2ttypes import SessionStatus
-    from common import resource_path, filepathToStr
+    from common import resource_path
 
 class NavBarWidget(QtWidgets.QWidget):
     """
@@ -274,6 +275,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
         QtCore.QCoreApplication.quit()
         os_kill(os_getpid(), 9)
+
+def filepathToStr(filepath: str) -> str:
+    """Given filepath it returns its contents as a string
+
+    Parameters
+    ----------
+    filepath : str
+        relative path of the file to read
+
+    Returns
+    -------
+    content : str
+        Contents of the file as a str
+    """
+    data = ""
+    abs_path = str(Path(__file__).parent.absolute() / filepath)
+    try:
+        with open(abs_path) as styles:
+            data = styles.read()
+    except:
+        print("Error opening file", abs_path)
+    return data
 
 def main():
     args = sys.argv[1:]

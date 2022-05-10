@@ -58,5 +58,6 @@
 - Fixed closing of graph window.
 - to npl format before showing it into the graph.
 - Fixed import bugs.
+- Fixed QSS import bugs.
 
 ## News

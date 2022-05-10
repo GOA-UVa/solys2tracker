@@ -10,7 +10,6 @@ from typing import List
 import logging
 import random
 import sys
-from pathlib import Path
 import string
 from os import path as os_path, system as os_system, getpid as os_getpid, kill as os_kill
 
@@ -49,28 +48,6 @@ def add_spacer(layout: QtWidgets.QBoxLayout, spacers: List[QtWidgets.QSpacerItem
     spacer = QtWidgets.QSpacerItem(w, h)
     layout.addSpacerItem(spacer)
     spacers.append(spacer)
-
-def filepathToStr(filepath: str) -> str:
-    """Given filepath it returns its contents as a string
-
-    Parameters
-    ----------
-    filepath : str
-        relative path of the file to read
-
-    Returns
-    -------
-    content : str
-        Contents of the file as a str
-    """
-    data = ""
-    abs_path = str(Path(__file__).parent.absolute() / filepath)
-    try:
-        with open(abs_path) as styles:
-            data = styles.read()
-    except:
-        print("Error opening file", abs_path)
-    return data
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
