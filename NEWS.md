@@ -53,5 +53,7 @@
 - Using solys2==0.2.3
 - Using spicedmoon==1.0.1
 - Using asdcontroller==0.0.11
+- drift substracted
+- ASD Output format track changed.
 
 ## News
