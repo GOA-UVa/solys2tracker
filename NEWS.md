@@ -50,5 +50,7 @@
 - Graph bugs fixed.
 - Drift not substracted in track.
 - Track printing all vnir-header data to file.
+- Using solys2==0.2.3
+- Using spicedmoon==1.0.1
 
 ## News
