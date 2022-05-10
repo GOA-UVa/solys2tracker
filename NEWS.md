@@ -47,5 +47,8 @@
 - BodyTrackWidget now doesnt get blocked initially when connecting, and the optimization is done pointing to the body.
 - Added graph when using ASD.
 - Graph in a window, trying to improve the graph, more data, and only closes when tracking finishes.
+- Graph bugs fixed.
+- Drift not substracted in track.
+- Track printing all vnir-header data to file.
 
 ## News

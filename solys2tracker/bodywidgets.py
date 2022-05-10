@@ -221,9 +221,6 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.content_layout.addWidget(self.log_handler)
         self.log_handlers = [self.log_handler.get_handler()]
         self.log_handler.setVisible(False)
-        # Graph
-        self.graph = GraphWindow()
-        self.graph.setVisible(False)
         # Finish content
         self.track_button = QtWidgets.QPushButton("Start")
         self.track_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -261,14 +258,13 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.graph.update_plot(x_data, y_data)
         self.graph.update_headers(spec)
         with open(filename, 'w') as f:
-            print("it: {}. Drift: {}".format(spec.fr_spectrum_header.v_header.it,
-                spec.fr_spectrum_header.v_header.drift), file=f)
+            print("VNIR header: {}".format(spec.fr_spectrum_header.v_header), file=f)
             s1h = spec.fr_spectrum_header.s1_header
             print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
             s2h = spec.fr_spectrum_header.s2_header
             print("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset), file=f)
             print("", file=f)
-            spec.to_npl_format()
+            # spec.to_npl_format()
             for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
                 print("{:.3f}\t{:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
             f.close()
@@ -383,7 +379,8 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.finished_tracking()
 
     def initialize_graph(self):
-        self.graph.setVisible(True)
+        # Graph
+        self.graph = GraphWindow()
         self.graph.show()
         self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
 

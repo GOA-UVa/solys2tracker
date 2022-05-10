@@ -133,7 +133,6 @@ class GraphWidget(QtWidgets.QWidget):
         self.title = title
         self.xlabel = xlabel
         self.ylabel = ylabel
-        self.redraw()
     
     def redraw(self):
         self.canvas.axes.cla()  # Clear the canvas.
@@ -143,11 +142,11 @@ class GraphWidget(QtWidgets.QWidget):
         self.canvas.axes.set_ylabel(self.ylabel)
         self.canvas.draw()
 
-class CaptureDataWindow(QtWidgets.QWidget):
+class CaptureDataWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self._build_layout()
-    
+
     def _build_layout(self):
         self.v_spacers = []
         self.h_spacers = []
@@ -193,7 +192,7 @@ class CaptureDataWindow(QtWidgets.QWidget):
 class GraphWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.graph = CaptureDataWindow()
+        self.graph = CaptureDataWidget()
         self.should_close = False
         self.setCentralWidget(self.graph)
     
