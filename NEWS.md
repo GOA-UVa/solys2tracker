@@ -46,5 +46,6 @@
 - Corrected track gui bug.
 - BodyTrackWidget now doesnt get blocked initially when connecting, and the optimization is done pointing to the body.
 - Added graph when using ASD.
+- Graph in a window, trying to improve the graph, more data, and only closes when tracking finishes.
 
 ## News

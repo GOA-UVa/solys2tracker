@@ -31,12 +31,12 @@ try:
     from solys2tracker.s2ttypes import SessionStatus, BodyEnum
     from solys2tracker import constants
     from solys2tracker import ifaces
-    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWidget
+    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWindow
 except:
     import constants
     import ifaces
     from s2ttypes import SessionStatus, BodyEnum
-    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWidget
+    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWindow
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -222,7 +222,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.log_handlers = [self.log_handler.get_handler()]
         self.log_handler.setVisible(False)
         # Graph
-        self.graph = GraphWidget()
+        self.graph = GraphWindow()
         self.graph.setVisible(False)
         # Finish content
         self.track_button = QtWidgets.QPushButton("Start")
@@ -259,6 +259,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         x_data = [i for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN+1)]
         y_data = spec.spec_buffer
         self.graph.update_plot(x_data, y_data)
+        self.graph.update_headers(spec)
         with open(filename, 'w') as f:
             print("it: {}. Drift: {}".format(spec.fr_spectrum_header.v_header.it,
                 spec.fr_spectrum_header.v_header.drift), file=f)
@@ -449,6 +450,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.seconds_input.setDisabled(False)
         self.track_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)
+        self.graph.force_close()
         if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
             self.asd_checkbox.setEnabled(True)
             self.asd_itime_checkbox.setEnabled(True)
