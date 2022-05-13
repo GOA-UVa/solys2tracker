@@ -300,14 +300,14 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 callback = self.asd_acquire
 
             if self.body == BodyEnum.SUN:
-                library = psc.SunLibrary.SPICEDSUN
+                library = psc.SunLibrary.SPICEDSUNSAFE
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
                 self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
                     library, altitude, self.kernels_path, inst_callback=callback,
                     instrument_delay=instrument_delay)
             else:
-                library = psc.MoonLibrary.SPICEDMOON
+                library = psc.MoonLibrary.SPICEDMOONSAFE
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
@@ -341,13 +341,13 @@ class BodyTrackWidget(QtWidgets.QWidget):
             seconds = 10
             altitude = cs.height
             if self.track_widget.body == BodyEnum.SUN:
-                library = psc.SunLibrary.SPICEDSUN
+                library = psc.SunLibrary.SPICEDSUNSAFE
                 if kp is None or kp == "":
                     library = psc.SunLibrary.PYSOLAR
                 self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, kp)
             else:
-                library = psc.MoonLibrary.SPICEDMOON
+                library = psc.MoonLibrary.SPICEDMOONSAFE
                 if kp is None or kp == "":
                     library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
@@ -807,7 +807,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         if self.call_asd:
             callback = self.asd_acquire
         if self.body == BodyEnum.SUN:
-            library = psc.SunLibrary.SPICEDSUN
+            library = psc.SunLibrary.SPICEDSUNSAFE
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.SunLibrary.PYSOLAR
             args = [cs.ip, cp, library, self.logger, cs.port,
@@ -817,7 +817,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
             else:
                 self.crosser = cali.SolarCross(*args, inst_callback=callback)
         else:
-            library = psc.MoonLibrary.SPICEDMOON
+            library = psc.MoonLibrary.SPICEDMOONSAFE
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.MoonLibrary.EPHEM_MOON
             args = [cs.ip, cp, library, self.logger, cs.port,
@@ -887,13 +887,13 @@ class BodyCrossWidget(QtWidgets.QWidget):
             seconds = 10
             altitude = cs.height
             if self.cross_widget.body == BodyEnum.SUN:
-                library = psc.SunLibrary.SPICEDSUN
+                library = psc.SunLibrary.SPICEDSUNSAFE
                 if kp is None or kp == "":
                     library = psc.SunLibrary.PYSOLAR
                 self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, kp)
             else:
-                library = psc.MoonLibrary.SPICEDMOON
+                library = psc.MoonLibrary.SPICEDMOONSAFE
                 if kp is None or kp == "":
                     library = psc.MoonLibrary.EPHEM_MOON
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
@@ -1040,7 +1040,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
             cs = self.session_status
             altitude = cs.height
             self.logger = get_custom_logger(self.logfile, self.log_handlers)
-            library = psc.MoonLibrary.SPICEDMOON
+            library = psc.MoonLibrary.SPICEDMOONSAFE
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.MoonLibrary.EPHEM_MOON
             self.black_thread = Thread(target=cali.black_moon, args=[cs.ip, self.logger, cs.port,

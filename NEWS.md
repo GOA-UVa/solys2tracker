@@ -60,5 +60,7 @@
 - Fixed import bugs.
 - Fixed QSS import bugs.
 - Optimization made in position correctly.
+- Using solys2==0.2.4
+- Using SPICED...SAFE options from the solys2 package so even if it fails the software doesn't stop.
 
 ## News
