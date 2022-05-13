@@ -59,5 +59,6 @@
 - to npl format before showing it into the graph.
 - Fixed import bugs.
 - Fixed QSS import bugs.
+- Optimization made in position correctly.
 
 ## News

@@ -370,8 +370,8 @@ class BodyTrackWidget(QtWidgets.QWidget):
         def run(self):
             try:
                 self._start_tracking_body()
-                self._initiate_asd_ctr(self.track_widget.use_custom_itime)
                 self._stop_tracking_sync()
+                self._initiate_asd_ctr(self.track_widget.use_custom_itime)
                 self.track_widget.logger.info("Stopped tracking after optimization.")
                 self.finished.emit()
             except Exception as e:
@@ -909,10 +909,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
         def run(self):
             try:
                 self._start_tracking_body()
+                self._stop_tracking_sync()
                 self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
                 self.cross_widget.asd_ctr.restore()
                 self.cross_widget.asd_ctr.optimize()
-                self._stop_tracking_sync()
                 self.cross_widget.logger.info("Stopped tracking after optimization.")
                 self.finished.emit()
             except Exception as e:
