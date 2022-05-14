@@ -8,30 +8,29 @@ It exports the following classes:
 """
 
 """___Built-In Modules___"""
-from typing import Tuple, List
+from typing import List
 from enum import Enum
 
 """___Third-Party Modules___"""
-from PySide2 import QtWidgets, QtCore, QtGui
-from solys2 import solys2 as s2
+from PySide2 import QtWidgets
 
 """___Solys2Tracker Modules___"""
 try:
-    from solys2tracker.s2ttypes import ConnectionStatus, BodyEnum
+    from solys2tracker.s2ttypes import SessionStatus, BodyEnum
     from solys2tracker import ifaces
     from solys2tracker import noconflict
     from solys2tracker.common import add_spacer
     from solys2tracker.bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
     from solys2tracker.configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
-        AdjustWidget
+        AdjustWidget, PositionWidget, OtherWidget, ASDWidget
 except:
     import ifaces
     import noconflict
-    from s2ttypes import ConnectionStatus, BodyEnum
+    from s2ttypes import SessionStatus, BodyEnum
     from common import add_spacer
     from bodywidgets import BodyMenuWidget, BodyTrackWidget, BodyCrossWidget, BodyBlackWidget
     from configwidgets import ConnectionWidget, ConfigNavBarWidget, SpiceWidget, LogWidget, \
-        AdjustWidget
+        AdjustWidget, PositionWidget, OtherWidget, ASDWidget
 
 """___Authorship___"""
 __author__ = 'Javier Gatón Herguedas'
@@ -46,7 +45,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
     
     Attributes
     ----------
-    conn_status : ConnectionStatus
+    session_status : SessionStatus
         Current status of the GUI connection with the Solys2.
     solys2_w : ISolys2Widget
         Main parent widget that contains the main functionality and other widgets.
@@ -68,17 +67,17 @@ class ConfigurationWidget(QtWidgets.QWidget):
     message_l : QLabel
     connect_but : QPushButton
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, session_status: SessionStatus):
         """
         Parameters
         ----------
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
-        self.conn_status = conn_status
+        self.session_status = session_status
         self.solys2_w = solys2_w
         self._build_layout()
     
@@ -86,8 +85,8 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.h_spacers = []
         self.v_spacers = []
         self.main_layout = QtWidgets.QHBoxLayout(self)
-        self.navbar_w = ConfigNavBarWidget(self, self.conn_status)
-        self.content_w = ConnectionWidget(self, self.conn_status)
+        self.navbar_w = ConfigNavBarWidget(self, self.session_status)
+        self.content_w = ConnectionWidget(self, self.session_status)
         add_spacer(self.main_layout, self.h_spacers)
         self.main_layout.addWidget(self.navbar_w)
         add_spacer(self.main_layout, self.h_spacers)
@@ -96,7 +95,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
 
     def connection_changed(self):
         """
-        Function called when the connection status (self.conn_status) has changed.
+        Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         self.solys2_w.connection_changed()
@@ -141,6 +140,9 @@ class ConfigurationWidget(QtWidgets.QWidget):
         SPICE = 1
         LOG = 2
         ADJUST = 3
+        MOVE_POS = 4
+        OTHER = 5
+        ASD = 6
 
     def _change_tab(self, page: PageEnum):
         """
@@ -154,13 +156,19 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.main_layout.removeWidget(self.content_w)
         self.content_w.deleteLater()
         if page == ConfigurationWidget.PageEnum.CONNECTION:
-            self.content_w = ConnectionWidget(self, self.conn_status)
+            self.content_w = ConnectionWidget(self, self.session_status)
         elif page == ConfigurationWidget.PageEnum.SPICE:
-            self.content_w = SpiceWidget(self, self.conn_status)
+            self.content_w = SpiceWidget(self, self.session_status)
         elif page == ConfigurationWidget.PageEnum.LOG:
-            self.content_w = LogWidget(self, self.conn_status)
+            self.content_w = LogWidget(self, self.session_status)
+        elif page == ConfigurationWidget.PageEnum.ADJUST:
+            self.content_w = AdjustWidget(self, self.session_status)
+        elif page == ConfigurationWidget.PageEnum.MOVE_POS:
+            self.content_w = PositionWidget(self, self.session_status)
+        elif page == ConfigurationWidget.PageEnum.OTHER:
+            self.content_w = OtherWidget(self, self.session_status)
         else:
-            self.content_w = AdjustWidget(self, self.conn_status)
+            self.content_w = ASDWidget(self, self.session_status)
         self.main_layout.addWidget(self.content_w, 1)
 
     def change_tab_connection(self) -> None:
@@ -187,22 +195,40 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """
         self._change_tab(ConfigurationWidget.PageEnum.ADJUST)
 
+    def change_tab_move_pos(self) -> None:
+        """
+        Change the tab to the MOVE_POS tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.MOVE_POS)
+
+    def change_tab_other(self) -> None:
+        """
+        Change the tab to the OTHER tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.OTHER)
+
+    def change_tab_asd(self) -> None:
+        """
+        Change the tab to the ASD tab.
+        """
+        self._change_tab(ConfigurationWidget.PageEnum.ASD)
+
 class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflict.makecls()):
     """
     The sun tab.
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, session_status: SessionStatus):
         """
         Parameters
         ----------
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.solys2_w = solys2_w
-        self.conn_status = conn_status
+        self.session_status = session_status
         self.title_str = "SUN ☼"
         self.menu_options = ["Track", "Cross", "Mesh"]
         self.description_str = "PUT ON THE FILTER!"
@@ -228,14 +254,14 @@ class SunTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconflic
         self.page_w.deleteLater()
         body = BodyEnum.SUN
         if option == self.menu_options[0]:
-            self.page_w = BodyTrackWidget(self, body, self.conn_status,
-                self.conn_status.logfile, self.conn_status.kernels_path)
+            self.page_w = BodyTrackWidget(self, body, self.session_status,
+                self.session_status.kernels_path)
         elif option == self.menu_options[1]:
-            self.page_w = BodyCrossWidget(self, body, self.conn_status,
-                self.conn_status.logfile, self.conn_status.kernels_path)
+            self.page_w = BodyCrossWidget(self, body, self.session_status,
+                self.session_status.kernels_path)
         else:
-            self.page_w = BodyCrossWidget(self, body, self.conn_status, 
-                self.conn_status.logfile, self.conn_status.kernels_path, is_mesh = True)
+            self.page_w = BodyCrossWidget(self, body, self.session_status, 
+                self.session_status.kernels_path, is_mesh = True)
         self.main_layout.addWidget(self.page_w)
     
     def set_disabled_navbar(self, disabled: bool):
@@ -275,18 +301,18 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
     """
     The moon tab.
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, session_status: SessionStatus):
         """
         Parameters
         ----------
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
         super().__init__()
         self.solys2_w = solys2_w
-        self.conn_status = conn_status
+        self.session_status = session_status
         self.title_str = "MOON ☾"
         self.menu_options = ["Track", "Cross", "Mesh", "Black"]
         self.description_str = "TAKE OFF THE FILTER"
@@ -312,17 +338,17 @@ class MoonTabWidget(QtWidgets.QWidget, ifaces.IBodyTabWidget, metaclass=noconfli
         self.page_w.deleteLater()
         body = BodyEnum.MOON
         if option == self.menu_options[0]:
-            self.page_w = BodyTrackWidget(self, body, self.conn_status,
-                self.conn_status.logfile, self.conn_status.kernels_path)
+            self.page_w = BodyTrackWidget(self, body, self.session_status,
+                self.session_status.kernels_path)
         elif option == self.menu_options[1]:
-            self.page_w = BodyCrossWidget(self, body, self.conn_status,
-                self.conn_status.logfile, self.conn_status.kernels_path)
+            self.page_w = BodyCrossWidget(self, body, self.session_status,
+                self.session_status.kernels_path)
         elif option == self.menu_options[2]:
-            self.page_w = BodyCrossWidget(self, body, self.conn_status,
-                self.conn_status.logfile, self.conn_status.kernels_path, is_mesh = True)
+            self.page_w = BodyCrossWidget(self, body, self.session_status,
+                self.session_status.kernels_path, is_mesh = True)
         else:
-            self.page_w = BodyBlackWidget(self, body, self.conn_status,
-                self.conn_status.logfile, self.conn_status.kernels_path)
+            self.page_w = BodyBlackWidget(self, body, self.session_status,
+                self.session_status.kernels_path)
         self.main_layout.addWidget(self.page_w)
 
     def set_disabled_navbar(self, disabled: bool):

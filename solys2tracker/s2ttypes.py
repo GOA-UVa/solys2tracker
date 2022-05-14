@@ -11,10 +11,8 @@ try:
 except:
     import localdata
 
-_DEFAULT_LOGFILE = "log.temp.out.txt"
-
 @dataclass
-class ConnectionStatus:
+class SessionStatus:
     """
     Attributes
     ----------
@@ -26,8 +24,12 @@ class ConnectionStatus:
     port: int
     password: str
     is_connected: bool
-    logfile: str
+    logfolder: str
     kernels_path: str
+    height: int
+    asd_ip: str
+    asd_port: int
+    asd_folder: str
 
     def __post_init__(self):
         if self.ip is None:
@@ -38,12 +40,20 @@ class ConnectionStatus:
             self.password = "solys"
         if self.is_connected is None:
             self.is_connected = False
-        if self.logfile is None:
-            self.logfile = self._get_logfile_data()
-            if self.logfile == "":
-                self.logfile = _DEFAULT_LOGFILE
+        if self.logfolder is None:
+            self.logfolder = self._get_logfolder_data()
+            if self.logfolder == "":
+                self.logfolder = "."
         if self.kernels_path is None:
             self.kernels_path = self._get_kernels_path_data()
+        if self.height is None:
+            self.height = self._get_height_data()
+        if self.asd_ip is None:
+            self.asd_ip = self._get_asd_ip_data()
+        if self.asd_port is None:
+            self.asd_port = self._get_asd_port_data()
+        if self.asd_folder is None:
+            self.asd_folder = self._get_asd_folder_data()
     
     def _get_ip_data(self) -> str:
         return localdata.get_value("ip")
@@ -51,8 +61,26 @@ class ConnectionStatus:
     def _get_kernels_path_data(self) -> str:
         return localdata.get_value("kernels_path")
 
-    def _get_logfile_data(self) -> str:
-        return localdata.get_value("logfile")
+    def _get_logfolder_data(self) -> str:
+        return localdata.get_value("logfolder")
+
+    def _get_height_data(self) -> int:
+        height_str = localdata.get_value("height")
+        if height_str == "":
+            return 0
+        return int(height_str)
+
+    def _get_asd_ip_data(self) -> str:
+        return localdata.get_value("asd_ip")
+
+    def _get_asd_port_data(self) -> int:
+        port = localdata.get_value("asd_port")
+        if port == "":
+            return 0
+        return int(port)
+
+    def _get_asd_folder_data(self) -> str:
+        return localdata.get_value("asd_folder")
 
     def save_ip_data(self):
         localdata.save_value("ip", self.ip)
@@ -60,11 +88,20 @@ class ConnectionStatus:
     def save_kernels_path_data(self):
         localdata.save_value("kernels_path", self.kernels_path)
 
-    def save_logfile_data(self):
-        localdata.save_value("logfile", self.logfile)
+    def save_logfolder_data(self):
+        localdata.save_value("logfolder", self.logfolder)
 
-    def set_logfolder(self, logfolder: str):
-        self.logfile = logfolder + "/" + _DEFAULT_LOGFILE
+    def save_height_data(self):
+        localdata.save_value("height", self.height)
+    
+    def save_asd_ip_data(self):
+        localdata.save_value("asd_ip", self.asd_ip)
+
+    def save_asd_port_data(self):
+        localdata.save_value("asd_port", self.asd_port)
+
+    def save_asd_folder_data(self):
+        localdata.save_value("asd_folder", self.asd_folder)
 
 class BodyEnum(Enum):
     SUN = 0

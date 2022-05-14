@@ -7,9 +7,9 @@ This module starts the Solys2Tracker GUI when executed.
 """___Built-In Modules___"""
 from enum import Enum
 from typing import Union, List
-from pathlib import Path
 import sys
-from os import path as os_path, system as os_system, getpid as os_getpid, kill as os_kill
+from pathlib import Path
+from os import getpid as os_getpid, kill as os_kill
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -20,28 +20,30 @@ try:
     from solys2tracker import ifaces
     from solys2tracker import noconflict
     from solys2tracker.tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
-    from solys2tracker.s2ttypes import ConnectionStatus
+    from solys2tracker.s2ttypes import SessionStatus
+    from solys2tracker.common import resource_path
 except:
     import constants
     import ifaces
     import noconflict
     from tabs import ConfigurationWidget, SunTabWidget, MoonTabWidget
-    from s2ttypes import ConnectionStatus
+    from s2ttypes import SessionStatus
+    from common import resource_path
 
 class NavBarWidget(QtWidgets.QWidget):
     """
     Navigaton bar that allows the user to change between tabs.
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget, conn_status: ConnectionStatus):
+    def __init__(self, solys2_w : ifaces.ISolys2Widget, session_status: SessionStatus):
         """
         Parameters
         ----------
         solys2_w : ISolys2Widget
             Main parent widget that contains the main functionality and other widgets.
-        conn_status : ConnectionStatus
+        session_status : SessionStatus
             Current status of the GUI connection with the Solys2.
         """
-        self.conn_status = conn_status
+        self.session_status = session_status
         self.solys2_w = solys2_w
         self._build_layout()
 
@@ -75,7 +77,7 @@ class NavBarWidget(QtWidgets.QWidget):
         Updates the enabled status of the buttons based on if the connection_status
         is connected.
         """
-        enabled = self.conn_status.is_connected
+        enabled = self.session_status.is_connected
         self.set_enabled_buttons(enabled)
     
     @QtCore.Slot()
@@ -106,7 +108,7 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         Widget that contains the current visible functionality.
     layout : QtWidgets.QHBoxLayout
         Main layout of the widget.
-    conn_status : ConnectionStatus
+    session_status : SessionStatus
         Current status of the GUI connection with the Solys2.
     can_close : bool
         Flag that lets the window know if the widget should not be closed.
@@ -121,21 +123,22 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         super().__init__()
         self.kernel_path = kernel_path
         self.is_connected = False
-        self.conn_status = ConnectionStatus(None, None, None, False, None, None)
+        self.session_status = SessionStatus(None, None, None, False, None, None, None,
+            None, None, None)
         self.can_close = True
         self._build_layout()
     
     def _build_layout(self):
-        self.navbar_w = NavBarWidget(self, self.conn_status)
+        self.navbar_w = NavBarWidget(self, self.session_status)
         self.content_w: Union[ConfigurationWidget, SunTabWidget] = \
-            ConfigurationWidget(self, self.conn_status)
+            ConfigurationWidget(self, self.session_status)
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.addWidget(self.navbar_w)
         self.main_layout.addWidget(self.content_w)
     
     def connection_changed(self):
         """
-        Function called when the connection status (self.conn_status) has changed.
+        Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         self.navbar_w.update_button_enabling()
@@ -180,11 +183,11 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         self.main_layout.removeWidget(self.content_w)
         self.content_w.deleteLater()
         if tab == Solys2Widget.TabEnum.SUN:
-            self.content_w = SunTabWidget(self, self.conn_status)
+            self.content_w = SunTabWidget(self, self.session_status)
         elif tab == Solys2Widget.TabEnum.MOON:
-            self.content_w = MoonTabWidget(self, self.conn_status)
+            self.content_w = MoonTabWidget(self, self.session_status)
         else:
-            self.content_w = ConfigurationWidget(self, self.conn_status)
+            self.content_w = ConfigurationWidget(self, self.session_status)
         self.main_layout.addWidget(self.content_w)
 
     def change_tab_sun(self):
@@ -295,11 +298,6 @@ def filepathToStr(filepath: str) -> str:
         print("Error opening file", abs_path)
     return data
 
-def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        return os_path.join(sys._MEIPASS, relative_path)
-    return os_path.join(os_path.abspath('.'), relative_path)
-
 def main():
     args = sys.argv[1:]
     kernels_path = constants.KERNELS_PATH
@@ -308,7 +306,7 @@ def main():
     app = QtWidgets.QApplication([constants.APPLICATION_NAME])
     window = MainWindow()
     main_widget = Solys2Widget(kernels_path)
-    window.setMinimumSize(600, 500)
+    window.resize(650, 450)
     window.setCentralWidget(main_widget)
     window.show()
     window.setWindowTitle(constants.APPLICATION_NAME)

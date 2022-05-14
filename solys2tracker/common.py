@@ -9,10 +9,16 @@ It exports the following functions:
 from typing import List
 import logging
 import random
+import sys
 import string
+from os import path as os_path, system as os_system, getpid as os_getpid, kill as os_kill
 
 """___Third-Party Modules___"""
-from PySide2 import QtWidgets, QtCore
+from PySide2 import QtWidgets, QtCore, QtGui
+from matplotlib.axes import Axes
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from asdcontroller import asd_types as asdt
 
 """___Solys2Tracker Modules___"""
 # import here
@@ -42,6 +48,11 @@ def add_spacer(layout: QtWidgets.QBoxLayout, spacers: List[QtWidgets.QSpacerItem
     spacer = QtWidgets.QSpacerItem(w, h)
     layout.addSpacerItem(spacer)
     spacers.append(spacer)
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os_path.join(sys._MEIPASS, relative_path)
+    return os_path.join(os_path.abspath('.'), relative_path)
 
 class LogWorker(QtCore.QObject):
     data_ready = QtCore.Signal(str)
@@ -99,6 +110,117 @@ class LoggerDialog(QtWidgets.QDialog, QtWidgets.QPlainTextEdit):
 
     def get_handler(self) -> logging.Handler:
         return self.logTextBox
+
+
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes: Axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+class GraphWidget(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.title = ""
+        self.xlabel = ""
+        self.ylabel = ""
+        self._build_layout()
+
+    def _build_layout(self):
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.canvas = MplCanvas(self)
+        self.main_layout.addWidget(self.canvas)
+
+    def update_plot(self, x_data: list, y_data: list):
+        self.x_data = x_data
+        self.y_data = y_data
+        self.redraw()
+
+    def update_labels(self, title: str, xlabel: str, ylabel: str):
+        self.title = title
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+    
+    def redraw(self):
+        self.canvas.axes.cla()  # Clear the canvas.
+        self.canvas.axes.plot(self.x_data, self.y_data, "o",  markersize=2)
+        self.canvas.axes.set_title(self.title)
+        self.canvas.axes.set_xlabel(self.xlabel)
+        self.canvas.axes.set_ylabel(self.ylabel)
+        self.canvas.draw()
+
+class CaptureDataWidget(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self._build_layout()
+
+    def _build_layout(self):
+        self.v_spacers = []
+        self.h_spacers = []
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        # Headers
+        self.headers_layout = QtWidgets.QFormLayout()
+        self.label_itime = QtWidgets.QLabel("Integration time:")
+        self.label_drift = QtWidgets.QLabel("VNIR Drift:")
+        self.label_gain1 = QtWidgets.QLabel("Swir1 gain:")
+        self.label_gain2 = QtWidgets.QLabel("Swir2 gain:")
+        self.label_v_itime = QtWidgets.QLabel("")
+        self.label_v_drift = QtWidgets.QLabel("")
+        self.label_v_gain1 = QtWidgets.QLabel("")
+        self.label_v_gain2 = QtWidgets.QLabel("")
+        self.headers_layout.addRow(self.label_itime, self.label_v_itime)
+        self.headers_layout.addRow(self.label_drift, self.label_v_drift)
+        self.headers_layout.addRow(self.label_gain1, self.label_v_gain1)
+        self.headers_layout.addRow(self.label_gain2, self.label_v_gain2)
+        # Graph
+        self.graph = GraphWidget()
+        # Finish main layout
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addLayout(self.headers_layout)
+        add_spacer(self.main_layout, self.v_spacers)
+        self.main_layout.addWidget(self.graph)
+        add_spacer(self.main_layout, self.v_spacers)
+
+    def update_plot(self, x_data: list, y_data: list):
+        self.graph.update_plot(x_data, y_data)
+
+    def update_labels(self, title: str, xlabel: str, ylabel: str):
+        self.graph.update_labels(title, xlabel, ylabel)
+    
+    def update_headers(self, spec: asdt.FRInterpSpec):
+        vh = spec.fr_spectrum_header.v_header
+        s1 = spec.fr_spectrum_header.s1_header
+        s2 = spec.fr_spectrum_header.s2_header
+        self.label_v_itime.setText(asdt.ITimeEnum(vh.it).to_str())
+        self.label_v_drift.setText(str(vh.drift))
+        self.label_v_gain1.setText(str(s1.gain))
+        self.label_v_gain2.setText(str(s2.gain))
+
+class GraphWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.graph = CaptureDataWidget()
+        self.should_close = False
+        self.setCentralWidget(self.graph)
+    
+    def closeEvent(self, event: QtGui.QCloseEvent):
+        if self.should_close:
+            super().closeEvent(event)
+        else:
+            event.ignore()
+    
+    def force_close(self):
+        self.should_close = True
+        self.close()
+
+    def update_plot(self, x_data: list, y_data: list):
+        self.graph.update_plot(x_data, y_data)
+
+    def update_labels(self, title: str, xlabel: str, ylabel: str):
+        self.graph.update_labels(title, xlabel, ylabel)
+    
+    def update_headers(self, spec: asdt.FRInterpSpec):
+        self.graph.update_headers(spec)
 
 def _gen_random_str(len: int) -> str:
     """

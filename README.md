@@ -1,8 +1,19 @@
 # solys2tracker
 
-![Version 0.1.0-beta2](https://img.shields.io/badge/version-0.1.0--beta2-informational)
+![Version 0.2.1](https://img.shields.io/badge/version-0.2.1-informational)
 
-Desktop app for automating the Solys2.
+Desktop app for automating the Solys2 letting it track the Moon and the Sun.
+
+## Notice of Non-Affiliation and Disclaimer
+
+We are not affiliated, associated, authorized, endorsed by, or in any way officially
+connected with the SOLYS2 or with Kipp & Zonen, or any of its subsidiaries, or its
+affiliates.
+
+The official Kipp & Zonen website can be found at [kippzonen.com](https://kippzonen.com).
+
+The names SOLYS2 and Kipp & Zonen as well as related names, marks, emblems and images are
+registered trademarks of their respective owners.
 
 ## Features
 

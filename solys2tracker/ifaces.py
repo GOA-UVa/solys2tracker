@@ -32,7 +32,7 @@ class ISolys2Widget(ABC):
     @abstractmethod
     def connection_changed(self) -> None:
         """
-        Function called when the connection status (self.conn_status) has changed.
+        Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         pass
@@ -136,7 +136,7 @@ class IConfigWidget(ABC):
     @abstractmethod
     def connection_changed(self):
         """
-        Function called when the connection status (self.conn_status) has changed.
+        Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         pass
@@ -202,5 +202,26 @@ class IConfigWidget(ABC):
     def change_tab_adjust(self) -> None:
         """
         Change the tab to the ADJUST tab.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_move_pos(self) -> None:
+        """
+        Change the tab to the MOVE_POS tab.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_other(self) -> None:
+        """
+        Change the tab to the OTHER tab.
+        """
+        pass
+
+    @abstractmethod
+    def change_tab_asd(self) -> None:
+        """
+        Change the tab to the ASD tab.
         """
         pass

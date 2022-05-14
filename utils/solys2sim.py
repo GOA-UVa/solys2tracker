@@ -11,9 +11,19 @@ import threading
 current_azimuth = 0
 current_zenith = 0
 
+azimuth_adj = 0
+zenith_adj = 0
+
+last_po_time = None
+
+DELAY = 5
+
 def server_thread(conn: socket.socket):
     global current_azimuth
     global current_zenith
+    global azimuth_adj
+    global zenith_adj
+    global last_po_time
     print("new connection")
     empties = 0
     while True:
@@ -22,19 +32,39 @@ def server_thread(conn: socket.socket):
         data = conn.recv(1024)
         if data:
             empties = 0
+            time.sleep(0.1)
             print(data)
             cmd = str(data)[2:4]
             if cmd == "TI":
                 ret = "TI 2022 93 15 15 15"
             elif cmd == "PO":
+                last_po_time = time.time()
                 vals = str(data)[2:-3].split()
-                if int(vals[1]) == 0:
-                    current_azimuth = float(vals[2])
+                if len(vals) == 1:
+                    ret = "PO {} {}".format(current_azimuth, current_zenith)
                 else:
-                    current_zenith = float(vals[2])
-                ret = "PO"
+                    if int(vals[1]) == 0:
+                        current_azimuth = float(vals[2])
+                    else:
+                        current_zenith = float(vals[2])
+                    ret = "PO"
             elif cmd == "CP":
-                ret = "CP {} {}".format(current_azimuth, current_zenith)
+                current_po_time = time.time()
+                if last_po_time == None or last_po_time + DELAY <= current_po_time:
+                    ret = "CP {} {}".format(current_azimuth+azimuth_adj, current_zenith+zenith_adj)
+                else:
+                    ret = "CP {} {}".format(current_azimuth+azimuth_adj+1, current_zenith+zenith_adj+1)
+            elif cmd == "AD":
+                vals = str(data)[2:-3].split()
+                if len(vals) <= 1:
+                    ret = "AD {} {}".format(azimuth_adj, zenith_adj)
+                else:
+                    print(vals)
+                    if int(vals[1]) == 0:
+                        azimuth_adj += float(vals[2])
+                    else:
+                        zenith_adj += float(vals[2])
+                    ret = "AD"
             else:
                 ret = "{} 1 1 1 1 1 1 1 1 1 1 1".format(cmd)
             print(ret)
