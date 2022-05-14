@@ -63,5 +63,7 @@
 - Using solys2==0.2.4
 - Using SPICED...SAFE options from the solys2 package so even if it fails the software doesn't stop.
 - Using solys2==0.2.5
+- Using solys2==0.2.6
+- Wait enough time so the tracker has sent at least the first position
 
 ## News

@@ -333,7 +333,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
             self.track_widget = track_widget
             self.ip = ip
             self.port = port
-        
+
         def _start_tracking_body(self):
             logger = get_custom_logger(self.track_widget.logfile, [])
             cs = self.track_widget.session_status
@@ -370,6 +370,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         def run(self):
             try:
                 self._start_tracking_body()
+                time.sleep(5) # Wait enough time so the tracker has sent at least the first position
                 self._stop_tracking_sync()
                 self._initiate_asd_ctr(self.track_widget.use_custom_itime)
                 self.track_widget.logger.info("Stopped tracking after optimization.")
@@ -909,6 +910,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         def run(self):
             try:
                 self._start_tracking_body()
+                time.sleep(5) # Wait enough time so the tracker has sent at least the first position
                 self._stop_tracking_sync()
                 self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
                 self.cross_widget.asd_ctr.restore()
