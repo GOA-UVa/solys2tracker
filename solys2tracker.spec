@@ -8,11 +8,12 @@ a_pathex = []
 a_binaries = []
 a_datas = []
 runner_file = 'solys2tracker/runner.py'
+pyver = 'python3.10'
 
 if sys.platform == 'linux':
-    a_pathex = ['./.venv/lib/python3.8/site-packages/', './.venv/lib64/python3.8/site-packages/']
+    a_pathex = [f'./.venv/lib/{pyver}/site-packages/', f'./.venv/lib64/{pyver}/site-packages/']
     a_binaries = [
-        ('.venv/lib/python3.8/site-packages/spiceypy/utils/libcspice.so', './spiceypy/utils')
+        (f'.venv/lib/{pyver}/site-packages/spiceypy/utils/libcspice.so', './spiceypy/utils')
     ]
     a_datas = [
         ('solys2tracker/style.qss', '.')
