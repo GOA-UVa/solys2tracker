@@ -18,6 +18,20 @@ def read_asdmeans(path):
     return m1, m2, m3
 
 
+def normalize_both(arr0, arr1, t_min=0, t_max=1):
+    diff = t_max - t_min
+    minarr = min(min(arr0), min(arr1))
+    diff_arr = max(max(arr0), max(arr1)) - minarr
+    narrs = []
+    for arr in [arr0, arr1]:
+        norm_arr = []
+        for i in arr:
+            temp = (((i - minarr)*diff)/diff_arr) + t_min
+            norm_arr.append(temp)
+        narrs.append(norm_arr)
+    return narrs[0], narrs[1]
+
+
 def main():
     folder_path = sys.argv[1]
     min_max = _MINMAX
@@ -39,10 +53,11 @@ def main():
         x = np.arange(min, max+step, step)
         mid = int(lms/2)
         ax[0].set_title(f'Detector {i+1}: Azimut')
-        ax[0].scatter(x, ms[:mid])
+        norm0, norm1 = normalize_both(ms[:mid], ms[mid:])
+        ax[0].scatter(x, norm0)
         ax[0].grid()
         ax[1].set_title(f'Detector {i+1}: Zenit')
-        ax[1].scatter(x, ms[mid:])
+        ax[1].scatter(x, norm1)
         ax[1].grid()
     fig.tight_layout()
     plt.show()
