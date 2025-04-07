@@ -670,6 +670,11 @@ class BodyCrossWidget(QtWidgets.QWidget):
             self.asd_checkbox.setDisabled(True)
             self.asd_itime_checkbox.setChecked(False)
             self.asd_itime_checkbox.setDisabled(True)
+        self.asd_input_layout = QtWidgets.QHBoxLayout()
+        add_spacer(self.asd_input_layout, self.h_spacers)
+        self.asd_input_layout.addWidget(self.asd_checkbox)
+        add_spacer(self.asd_input_layout, self.h_spacers)
+        self.asd_input_layout.addWidget(self.asd_itime_checkbox)
         # Start button
         self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -695,7 +700,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.log_handler)
         add_spacer(self.content_layout, self.v_spacers)
-        self.content_layout.addWidget(self.asd_checkbox)
+        self.content_layout.addLayout(self.asd_input_layout)
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.start_button)
         add_spacer(self.content_layout, self.v_spacers)
@@ -936,7 +941,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 self._start_tracking_body()
                 time.sleep(5) # Wait enough time so the tracker has sent at least the first position
                 self._stop_tracking_sync()
-                self._initiate_asd_ctr(self.use_custom_itime)
+                self._initiate_asd_ctr(self.cross_widget.use_custom_itime)
                 self.cross_widget.logger.info("Stopped tracking after optimization.")
                 self.finished.emit()
             except Exception as e:
