@@ -658,12 +658,18 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(False)
         # ASD Checkbox
         self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
+        # ASD itime checkbox
+        self.asd_itime_checkbox = QtWidgets.QCheckBox("Use 544ms as integration time")
+        self.call_asd.stateChanged.connect(self.asd_checkbox_changed)
         if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
             self.asd_checkbox.setChecked(True)
+            self.asd_itime_checkbox.setChecked(True)
             self.countdown_input.setValue(DEFAULT_VALUE_COUNTDOWN_AUTOMATIC)
         else:
             self.asd_checkbox.setChecked(False)
             self.asd_checkbox.setDisabled(True)
+            self.asd_itime_checkbox.setChecked(False)
+            self.asd_itime_checkbox.setDisabled(True)
         # Start button
         self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
@@ -699,6 +705,15 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
+    
+    @QtCore.Slot()
+    def asd_checkbox_changed(self):
+        using_asd = self.asd_checkbox.isChecked()
+        if using_asd:
+            self.asd_itime_checkbox.setDisabled(False)
+        else:
+            self.asd_itime_checkbox.setChecked(False)
+            self.asd_itime_checkbox.setDisabled(True)
 
     def step_info_set_visible(self, visible: bool):
         self.next_step_label.setVisible(visible)
@@ -772,11 +787,13 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.log_countdown_label.setVisible(True)
         self.step_info_set_visible(True)
         self.call_asd = self.asd_checkbox.isChecked()
+        self.use_custom_itime = self.asd_itime_checkbox.isChecked()
         if self.call_asd:
             self.log_countdown.set_zero_msg("MEASURING...")
         self.log_countdown.start_handler()
         self.body_tab.set_enabled_close_button(False)
         self.asd_checkbox.setDisabled(True)
+        self.asd_itime_checkbox.setDisabled(True)
         option = _CROSS_LOGTITLE
         if self.is_mesh:
             option = _MESH_LOGTITLE
@@ -907,14 +924,19 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 while not self.tracker.is_finished():
                     time.sleep(1)
 
+        def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
+            self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
+            self.cross_widget.asd_ctr.restore()
+            self.cross_widget.asd_ctr.optimize()
+            if use_custom_itime:
+                self.cross_widget.asd_ctr.set_itime(custom_itime)
+
         def run(self):
             try:
                 self._start_tracking_body()
                 time.sleep(5) # Wait enough time so the tracker has sent at least the first position
                 self._stop_tracking_sync()
-                self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
-                self.cross_widget.asd_ctr.restore()
-                self.cross_widget.asd_ctr.optimize()
+                self._initiate_asd_ctr(self.use_custom_itime)
                 self.cross_widget.logger.info("Stopped tracking after optimization.")
                 self.finished.emit()
             except Exception as e:
@@ -962,7 +984,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.countdown_input.setDisabled(False)
         self.rest_input.setDisabled(False)
         self.body_tab.set_disabled_navbar(False)
-        self.asd_checkbox.setDisabled(False)
+        if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
+            self.asd_checkbox.setEnabled(True)
+            self.asd_itime_checkbox.setEnabled(True)
         if self.call_asd and self.asd_ctr is not None:
             self.asd_ctr.close()
 
