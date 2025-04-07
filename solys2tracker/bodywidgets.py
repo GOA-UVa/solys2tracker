@@ -660,7 +660,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
         # ASD itime checkbox
         self.asd_itime_checkbox = QtWidgets.QCheckBox("Use 544ms as integration time")
-        self.call_asd.stateChanged.connect(self.asd_checkbox_changed)
+        self.asd_checkbox.stateChanged.connect(self.asd_checkbox_changed)
         if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
             self.asd_checkbox.setChecked(True)
             self.asd_itime_checkbox.setChecked(True)
