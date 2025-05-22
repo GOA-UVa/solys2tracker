@@ -5,3 +5,4 @@ dist
 data.txt
 *.temp.*
 *.log.txt
+ignore_folder

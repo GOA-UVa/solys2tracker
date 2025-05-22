@@ -8,6 +8,7 @@ It exports the following classes:
 """___Built-In Modules___"""
 from ctypes import alignment
 from typing import Tuple
+import math
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -563,13 +564,13 @@ class AdjustWidget(QtWidgets.QWidget):
         self.input_layout = QtWidgets.QHBoxLayout()
         self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
         self.az_extra_adjustment = QtWidgets.QDoubleSpinBox()
-        self.az_extra_adjustment.setMinimum(-0.2)
-        self.az_extra_adjustment.setMaximum(0.2)
+        self.az_extra_adjustment.setMinimum(-2)
+        self.az_extra_adjustment.setMaximum(2)
         self.az_extra_adjustment.setSingleStep(0.01)
         self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
         self.ze_extra_adjustment = QtWidgets.QDoubleSpinBox()
-        self.ze_extra_adjustment.setMinimum(-0.2)
-        self.ze_extra_adjustment.setMaximum(0.2)
+        self.ze_extra_adjustment.setMinimum(-2)
+        self.ze_extra_adjustment.setMaximum(2)
         self.ze_extra_adjustment.setSingleStep(0.01)
         add_spacer(self.adjust_layout, self.h_spacers)
         self.input_layout.addWidget(self.az_label_input, 1)
@@ -689,10 +690,22 @@ class AdjustWidget(QtWidgets.QWidget):
             self.ze = ze
 
         def run(self):
+            az = self.az
+            ze = self.ze
             try:
                 solys = s2.Solys2(self.ip, self.port, self.password)
-                solys.adjust_azimuth(self.az)
-                solys.adjust_zenith(self.ze)
+                azi = math.copysign(0.2, az)
+                while abs(az) >= abs(azi):
+                    solys.adjust_azimuth(azi)
+                    az -= azi
+                if az != 0:
+                    solys.adjust_azimuth(az)
+                zei = math.copysign(0.2, ze)
+                while abs(ze) >= abs(zei):
+                    solys.adjust_zenith(zei)
+                    ze -= zei
+                if ze != 0:
+                    solys.adjust_zenith(ze)
                 self.success.emit()
             except Exception as e:
                 self.error.emit(str(e))
