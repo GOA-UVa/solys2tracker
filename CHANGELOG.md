@@ -5,14 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased] - yyyy-mm-dd
+[//]: # "## [unreleased] - yyyy-mm-dd"
+
+## [0.2.2] - 2025-05-22
 
 ### Added
 - Integration time of Detector 1 can be set to 544ms for crosses too now.
 - Cross showing utility improved. Normalised correctly and now with more options.
 - Solys Adjust tab can process values higher than 0.2, and it will split and process them internally.
-
-[//]: # "## [0.2.2] - 2022-05-14"
 
 ## [0.2.1] - 2022-05-14
 
@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConnectASDWorker Tracker has logger that logs only to the logfile.
 
 
-[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/javgat/solys2tracker/-/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/javgat/solys2tracker/-/compare/v0.2.0-beta.5...v0.2.1
 [0.2.0]: https://gitlab.com/javgat/solys2tracker/-/releases/v0.2.0-beta.5
