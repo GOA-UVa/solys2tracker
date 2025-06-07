@@ -147,6 +147,7 @@ class GraphWidget(QtWidgets.QWidget):
         self.canvas.axes.set_title(self.title)
         self.canvas.axes.set_xlabel(self.xlabel)
         self.canvas.axes.set_ylabel(self.ylabel)
+        self.canvas.axes.grid(True)
         self.canvas.draw()
 
 class CaptureDataWidget(QtWidgets.QWidget):
