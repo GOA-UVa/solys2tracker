@@ -164,6 +164,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.title_str = self.title_str + " | " + constants.TRACK_STR
         self.session_status = session_status
         self.kernels_path = kernels_path
+        self.graph = None
         self._build_layout()
 
     def _build_layout(self):
@@ -353,13 +354,13 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
                     library, altitude, kp)
             self.tracker.start()
-        
+
         def _stop_tracking_sync(self):
             if not self.tracker.is_finished():
                 self.tracker.stop()
                 while not self.tracker.is_finished():
                     time.sleep(1)
-        
+
         def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
             self.track_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
             self.track_widget.asd_ctr.restore()
@@ -442,7 +443,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.worker.finished.connect(self.finished_tracking)
         self.th.finished.connect(self.th.deleteLater)
         self.th.start()
-    
+
     def finished_tracking(self):
         """Tracking finished/stopped. Perform the needed actions."""
         self.body_tab.set_enabled_close_button(True)
@@ -453,7 +454,8 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.seconds_input.setDisabled(False)
         self.track_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)
-        self.graph.force_close()
+        if self.graph is not None:
+            self.graph.force_close()
         if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
             self.asd_checkbox.setEnabled(True)
             self.asd_itime_checkbox.setEnabled(True)
