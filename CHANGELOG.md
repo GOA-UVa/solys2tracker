@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Using solys2==v0.2.7
+- Using appdata
 
 ### Fixed
 - BodyWidget was accessing its graph attribute even if no graph had been generated (not using ASD).
