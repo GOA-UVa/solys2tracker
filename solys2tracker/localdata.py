@@ -75,7 +75,7 @@ def get_appdata_folder() -> str:
 
 
 def get_data_path() -> str:
-    os.path.join(get_appdata_folder(), constants.DATA_FILE_PATH)
+    return os.path.join(get_appdata_folder(), constants.DATA_FILE_PATH)
 
 
 def save_value(key: str, value: str):
