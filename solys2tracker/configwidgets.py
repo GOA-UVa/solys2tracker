@@ -27,7 +27,7 @@ except:
     from common import add_spacer
 
 """___Authorship___"""
-__author__ = 'Javier Gatón Herguedas'
+__author__ = "Javier Gatón Herguedas"
 __created__ = "2022/03/25"
 __maintainer__ = "Javier Gatón Herguedas"
 __email__ = "gaton@goa.uva.es"
@@ -61,11 +61,13 @@ def _try_conn(ip: str, port: int, password: str) -> Tuple[bool, str]:
         return False, str(e)
     return True, constants.MSG_CONNECTED_SUCCESSFULLY
 
+
 class ConfigNavBarWidget(QtWidgets.QWidget):
     """
     Configuration sub navigaton bar that allows the user to change between tabs.
     """
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -137,7 +139,7 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         """
         enabled = self.session_status.is_connected
         self.set_enabled_buttons(enabled)
-    
+
     @QtCore.Slot()
     def press_connection(self):
         """Press the CONNECTION button."""
@@ -157,7 +159,7 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
     def press_adjust(self):
         """Press the ADJUST button."""
         self.config_w.change_tab_adjust()
-    
+
     @QtCore.Slot()
     def press_move_pos(self):
         """Press the POSITION button."""
@@ -173,11 +175,13 @@ class ConfigNavBarWidget(QtWidgets.QWidget):
         """Press the ASD button."""
         self.config_w.change_tab_asd()
 
+
 class ConnectionWidget(QtWidgets.QWidget):
     """
     Configuration page containing the Solys2 connection functionality.
     """
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -190,13 +194,15 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.session_status = session_status
         self.config_w = config_w
         self._build_layout()
-    
+
     def _build_layout(self):
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.v_spacers = []
         self.h_spacers = []
         # Title
-        self.title = QtWidgets.QLabel("Configuration | Connection", alignment=QtCore.Qt.AlignCenter)
+        self.title = QtWidgets.QLabel(
+            "Configuration | Connection", alignment=QtCore.Qt.AlignCenter
+        )
         self.title.setObjectName("section_title")
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.title)
@@ -218,8 +224,12 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.port_label = QtWidgets.QLabel("Port:", alignment=QtCore.Qt.AlignCenter)
         self.port_input = QtWidgets.QSpinBox()
         self.port_input.setMaximum(1000000)
-        self.port_input.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-            self.port_input.sizePolicy().verticalPolicy()))
+        self.port_input.setSizePolicy(
+            QtWidgets.QSizePolicy(
+                QtWidgets.QSizePolicy.Expanding,
+                self.port_input.sizePolicy().verticalPolicy(),
+            )
+        )
         self.port_input.setValue(self.session_status.port)
         add_spacer(self.lay_port, self.h_spacers)
         self.lay_port.addWidget(self.port_label)
@@ -247,11 +257,12 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         self.message_l.setObjectName("message")
         # Connect button
-        connect_msg = "Connect"
+        connect_msg = "CONNECT"
         if self.session_status.is_connected:
-            connect_msg = "Reconnect"
+            connect_msg = "RECONNECT"
         self.connect_but = QtWidgets.QPushButton(connect_msg)
         self.connect_but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.connect_but.setProperty("class", "actionstart")
         self.connect_but.clicked.connect(self.check_connection)
         # Finish content
         add_spacer(self.content_layout, self.v_spacers)
@@ -270,6 +281,7 @@ class ConnectionWidget(QtWidgets.QWidget):
         """
         Worker that will perform the connection check against the Solys2
         """
+
         finished = QtCore.Signal(bool, str)
 
         def __init__(self, ip: str, port: int, password: str):
@@ -329,12 +341,12 @@ class ConnectionWidget(QtWidgets.QWidget):
         """
         self.message_l.setText(msg)
         label_color = constants.COLOR_RED
-        connect_msg = "Connect"
+        connect_msg = "CONNECT"
         if is_connected:
             self.session_status.save_ip_data()
             self.session_status.save_password_data()
             label_color = constants.COLOR_GREEN
-            connect_msg = "Reconnect"
+            connect_msg = "RECONNECT"
         self.connect_but.setText(connect_msg)
         self.message_l.setStyleSheet("background-color: {}".format(label_color))
         self.message_l.repaint()
@@ -342,8 +354,9 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.config_w.connection_changed()
         self.connect_but.setEnabled(True)
 
+
 class SpiceWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -357,7 +370,7 @@ class SpiceWidget(QtWidgets.QWidget):
         self.config_w = config_w
         self.session_status = session_status
         self._build_layout()
-    
+
     def _build_layout(self):
         self.v_spacers = []
         self.h_spacers = []
@@ -369,7 +382,9 @@ class SpiceWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.title)
         # Input
         self.input_layout = QtWidgets.QHBoxLayout()
-        self.select_label = QtWidgets.QLabel("Kernels directory:", alignment=QtCore.Qt.AlignCenter)
+        self.select_label = QtWidgets.QLabel(
+            "Kernels directory:", alignment=QtCore.Qt.AlignCenter
+        )
         self.select_btn = QtWidgets.QPushButton("Select folder")
         self.select_btn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.select_btn.clicked.connect(self.open_file_dialog)
@@ -385,7 +400,9 @@ class SpiceWidget(QtWidgets.QWidget):
         self.dir_str = self.kernels_path
         if self.dir_str == "":
             self.dir_str = "No directory selected"
-        self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
+        self.selected_label = QtWidgets.QLabel(
+            self.dir_str, alignment=QtCore.Qt.AlignCenter
+        )
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.selected_label)
         # Message
@@ -394,7 +411,8 @@ class SpiceWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.message_l)
         # Save button
-        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button = QtWidgets.QPushButton("SAVE")
+        self.save_button.setProperty("class", "actionstart")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.save_directory)
         add_spacer(self.main_layout, self.v_spacers)
@@ -410,7 +428,7 @@ class SpiceWidget(QtWidgets.QWidget):
             folderpaths = dlg.selectedFiles()
             self.kernels_path = folderpaths[0]
             self.selected_label.setText(self.kernels_path)
-    
+
     @QtCore.Slot()
     def save_directory(self):
         self.session_status.kernels_path = self.kernels_path
@@ -427,8 +445,9 @@ class SpiceWidget(QtWidgets.QWidget):
             self.message_l.setStyleSheet("background-color: {}".format(label_color))
             self.message_l.repaint()
 
+
 class LogWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -442,7 +461,7 @@ class LogWidget(QtWidgets.QWidget):
         self.config_w = config_w
         self.session_status = session_status
         self._build_layout()
-    
+
     def _build_layout(self):
         self.v_spacers = []
         self.h_spacers = []
@@ -454,7 +473,9 @@ class LogWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.title)
         # Input
         self.input_layout = QtWidgets.QHBoxLayout()
-        self.select_label = QtWidgets.QLabel("Log directory:", alignment=QtCore.Qt.AlignCenter)
+        self.select_label = QtWidgets.QLabel(
+            "Log directory:", alignment=QtCore.Qt.AlignCenter
+        )
         self.select_btn = QtWidgets.QPushButton("Select folder")
         self.select_btn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.select_btn.clicked.connect(self.open_file_dialog)
@@ -464,7 +485,9 @@ class LogWidget(QtWidgets.QWidget):
             self.dir_str = "No directory selected"
         elif self.dir_str == ".":
             self.dir_str = "Using current execution directory"
-        self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
+        self.selected_label = QtWidgets.QLabel(
+            self.dir_str, alignment=QtCore.Qt.AlignCenter
+        )
         add_spacer(self.input_layout, self.h_spacers)
         self.input_layout.addWidget(self.select_label)
         add_spacer(self.input_layout, self.h_spacers)
@@ -480,7 +503,8 @@ class LogWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.message_l)
         # Save button
-        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button = QtWidgets.QPushButton("SAVE")
+        self.save_button.setProperty("class", "actionstart")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.save_directory)
         add_spacer(self.main_layout, self.v_spacers)
@@ -496,7 +520,7 @@ class LogWidget(QtWidgets.QWidget):
             folderpaths = dlg.selectedFiles()
             self.log_folder = folderpaths[0]
             self.selected_label.setText(self.log_folder)
-    
+
     @QtCore.Slot()
     def save_directory(self):
         self.session_status.logfolder = self.log_folder
@@ -513,8 +537,9 @@ class LogWidget(QtWidgets.QWidget):
             self.message_l.setStyleSheet("background-color: {}".format(label_color))
             self.message_l.repaint()
 
+
 class AdjustWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -529,7 +554,7 @@ class AdjustWidget(QtWidgets.QWidget):
         self.session_status = session_status
         self._build_layout()
         self.update_adjustment_labels()
-    
+
     def _build_layout(self):
         self.v_spacers = []
         self.h_spacers = []
@@ -558,18 +583,24 @@ class AdjustWidget(QtWidgets.QWidget):
         self.main_layout.addLayout(self.adjust_layout)
         # Input
         # Input title
-        self.input_title = QtWidgets.QLabel("Add adjustments", alignment=QtCore.Qt.AlignCenter)
+        self.input_title = QtWidgets.QLabel(
+            "Add adjustments", alignment=QtCore.Qt.AlignCenter
+        )
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.input_title)
         # Input fields
         self.input_layout = QtWidgets.QHBoxLayout()
-        self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
+        self.az_label_input = QtWidgets.QLabel(
+            "Azimuth: ", alignment=QtCore.Qt.AlignRight
+        )
         self.az_extra_adjustment = QtWidgets.QDoubleSpinBox()
         self.az_extra_adjustment.setMinimum(-2)
         self.az_extra_adjustment.setMaximum(2)
         self.az_extra_adjustment.setSingleStep(0.01)
         self.az_extra_adjustment.setDecimals(3)
-        self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
+        self.ze_label_input = QtWidgets.QLabel(
+            "Zenith: ", alignment=QtCore.Qt.AlignRight
+        )
         self.ze_extra_adjustment = QtWidgets.QDoubleSpinBox()
         self.ze_extra_adjustment.setMinimum(-2)
         self.ze_extra_adjustment.setMaximum(2)
@@ -592,7 +623,8 @@ class AdjustWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.message_l)
         # Adjust button
-        self.save_button = QtWidgets.QPushButton("Adjust")
+        self.save_button = QtWidgets.QPushButton("ADJUST")
+        self.save_button.setProperty("class", "actionstart")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.adjust)
         add_spacer(self.main_layout, self.v_spacers)
@@ -603,6 +635,7 @@ class AdjustWidget(QtWidgets.QWidget):
         """
         Worker that will obtain the adjustment from the Solys2
         """
+
         finished = QtCore.Signal()
         success = QtCore.Signal(float, float)
         error = QtCore.Signal(str)
@@ -651,7 +684,7 @@ class AdjustWidget(QtWidgets.QWidget):
     def _update_adjustment_labels(self, az: float, ze: float):
         self.az_curr_adjustment.setText("{:+.4f}".format(az))
         self.ze_curr_adjustment.setText("{:+.4f}".format(ze))
-    
+
     def thread_finished(self):
         self.az_extra_adjustment.setDisabled(False)
         self.ze_extra_adjustment.setDisabled(False)
@@ -670,6 +703,7 @@ class AdjustWidget(QtWidgets.QWidget):
         """
         Worker that will send the adjustment from the Solys2
         """
+
         finished = QtCore.Signal()
         success = QtCore.Signal()
         error = QtCore.Signal(str)
@@ -757,9 +791,9 @@ class AdjustWidget(QtWidgets.QWidget):
         self.message_l.setStyleSheet("background-color: {}".format(label_color))
         self.message_l.repaint()
 
-class PositionWidget(QtWidgets.QWidget):
 
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+class PositionWidget(QtWidgets.QWidget):
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -774,7 +808,7 @@ class PositionWidget(QtWidgets.QWidget):
         self.session_status = session_status
         self._build_layout()
         self.update_position_labels()
-    
+
     def _build_layout(self):
         self.v_spacers = []
         self.h_spacers = []
@@ -803,16 +837,22 @@ class PositionWidget(QtWidgets.QWidget):
         self.main_layout.addLayout(self.current_layout)
         # Input
         # Input title
-        self.input_title = QtWidgets.QLabel("Set position", alignment=QtCore.Qt.AlignCenter)
+        self.input_title = QtWidgets.QLabel(
+            "Set position", alignment=QtCore.Qt.AlignCenter
+        )
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.input_title)
         # Input fields
         self.input_layout = QtWidgets.QHBoxLayout()
-        self.az_label_input = QtWidgets.QLabel("Azimuth: ", alignment=QtCore.Qt.AlignRight)
+        self.az_label_input = QtWidgets.QLabel(
+            "Azimuth: ", alignment=QtCore.Qt.AlignRight
+        )
         self.az_sending_position = QtWidgets.QDoubleSpinBox()
         self.az_sending_position.setMinimum(-1)
         self.az_sending_position.setMaximum(361)
-        self.ze_label_input = QtWidgets.QLabel("Zenith: ", alignment=QtCore.Qt.AlignRight)
+        self.ze_label_input = QtWidgets.QLabel(
+            "Zenith: ", alignment=QtCore.Qt.AlignRight
+        )
         self.ze_sending_position = QtWidgets.QDoubleSpinBox()
         self.ze_sending_position.setMinimum(-4)
         self.ze_sending_position.setMaximum(94.9)
@@ -833,7 +873,8 @@ class PositionWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.message_l)
         # Move button
-        self.save_button = QtWidgets.QPushButton("Move")
+        self.save_button = QtWidgets.QPushButton("MOVE")
+        self.save_button.setProperty("class", "actionstart")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.adjust)
         add_spacer(self.main_layout, self.v_spacers)
@@ -844,6 +885,7 @@ class PositionWidget(QtWidgets.QWidget):
         """
         Worker that will obtain the position from the Solys2
         """
+
         finished = QtCore.Signal()
         success = QtCore.Signal(float, float)
         error = QtCore.Signal(str)
@@ -894,7 +936,7 @@ class PositionWidget(QtWidgets.QWidget):
         self.ze_curr_pos.setText(str(ze))
         self.az_sending_position.setValue(az)
         self.ze_sending_position.setValue(ze)
-    
+
     def thread_finished(self):
         self.az_sending_position.setDisabled(False)
         self.ze_sending_position.setDisabled(False)
@@ -913,6 +955,7 @@ class PositionWidget(QtWidgets.QWidget):
         """
         Worker that will send the position from the Solys2
         """
+
         finished = QtCore.Signal()
         success = QtCore.Signal()
         error = QtCore.Signal(str)
@@ -957,7 +1000,9 @@ class PositionWidget(QtWidgets.QWidget):
         cs = self.session_status
         az = self.az_sending_position.value()
         ze = self.ze_sending_position.value()
-        self.worker = PositionWidget.SendPositionWorker(cs.ip, cs.port, cs.password, az, ze)
+        self.worker = PositionWidget.SendPositionWorker(
+            cs.ip, cs.port, cs.password, az, ze
+        )
         self.worker.moveToThread(self.th_send_adj)
         self.th_send_adj.started.connect(self.worker.run)
         self.worker.finished.connect(self.th_send_adj.quit)
@@ -988,8 +1033,9 @@ class PositionWidget(QtWidgets.QWidget):
         self.message_l.setStyleSheet("background-color: {}".format(label_color))
         self.message_l.repaint()
 
+
 class OtherWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -1003,7 +1049,7 @@ class OtherWidget(QtWidgets.QWidget):
         self.config_w = config_w
         self.session_status = session_status
         self._build_layout()
-    
+
     def _build_layout(self):
         self.v_spacers = []
         self.h_spacers = []
@@ -1017,12 +1063,18 @@ class OtherWidget(QtWidgets.QWidget):
         self.input_layout = QtWidgets.QVBoxLayout()
         # Height input (Row 1)
         self.lay_height = QtWidgets.QHBoxLayout()
-        self.height_label = QtWidgets.QLabel("Height (meters):", alignment=QtCore.Qt.AlignCenter)
+        self.height_label = QtWidgets.QLabel(
+            "Height (meters):", alignment=QtCore.Qt.AlignCenter
+        )
         self.height_input = QtWidgets.QSpinBox()
         self.height_input.setMaximum(10000000)
         self.height_input.setMinimum(0)
-        self.height_input.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
-            self.height_input.sizePolicy().verticalPolicy()))
+        self.height_input.setSizePolicy(
+            QtWidgets.QSizePolicy(
+                QtWidgets.QSizePolicy.Expanding,
+                self.height_input.sizePolicy().verticalPolicy(),
+            )
+        )
         self.height_input.setValue(self.session_status.height)
         add_spacer(self.lay_height, self.h_spacers)
         self.lay_height.addWidget(self.height_label)
@@ -1041,14 +1093,15 @@ class OtherWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.message_l)
         # Save button
-        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button = QtWidgets.QPushButton("SAVE")
+        self.save_button.setProperty("class", "actionstart")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.save_others)
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.save_button)
         # Finish main layout
         add_spacer(self.main_layout, self.v_spacers)
-    
+
     @QtCore.Slot()
     def save_others(self):
         self.session_status.height = self.height_input.value()
@@ -1065,8 +1118,9 @@ class OtherWidget(QtWidgets.QWidget):
             self.message_l.setStyleSheet("background-color: {}".format(label_color))
             self.message_l.repaint()
 
+
 class ASDWidget(QtWidgets.QWidget):
-    def __init__(self, config_w : ifaces.IConfigWidget, session_status: SessionStatus):
+    def __init__(self, config_w: ifaces.IConfigWidget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -1123,7 +1177,9 @@ class ASDWidget(QtWidgets.QWidget):
         # Folder input (Row 3)
         self.lay_folder = QtWidgets.QVBoxLayout()
         self.lay_folder_input = QtWidgets.QHBoxLayout()
-        self.select_label = QtWidgets.QLabel("ASD directory:", alignment=QtCore.Qt.AlignCenter)
+        self.select_label = QtWidgets.QLabel(
+            "ASD directory:", alignment=QtCore.Qt.AlignCenter
+        )
         self.select_btn = QtWidgets.QPushButton("Select folder")
         self.select_btn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.select_btn.clicked.connect(self.open_file_dialog)
@@ -1133,7 +1189,9 @@ class ASDWidget(QtWidgets.QWidget):
             self.dir_str = "No directory selected"
         elif self.dir_str == ".":
             self.dir_str = "Using current execution directory"
-        self.selected_label = QtWidgets.QLabel(self.dir_str, alignment=QtCore.Qt.AlignCenter)
+        self.selected_label = QtWidgets.QLabel(
+            self.dir_str, alignment=QtCore.Qt.AlignCenter
+        )
         add_spacer(self.lay_folder_input, self.h_spacers)
         self.lay_folder_input.addWidget(self.select_label)
         add_spacer(self.lay_folder_input, self.h_spacers)
@@ -1156,7 +1214,8 @@ class ASDWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.message_l)
         # Save button
-        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button = QtWidgets.QPushButton("SAVE")
+        self.save_button.setProperty("class", "actionstart")
         self.save_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.save_button.clicked.connect(self.save_values)
         add_spacer(self.main_layout, self.v_spacers)

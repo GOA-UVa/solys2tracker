@@ -31,27 +31,47 @@ try:
     from solys2tracker.s2ttypes import SessionStatus, BodyEnum
     from solys2tracker import constants
     from solys2tracker import ifaces
-    from solys2tracker.common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, \
-        GraphWindow, resource_path
+    from solys2tracker.common import (
+        add_spacer,
+        LoggerDialog,
+        get_custom_logger,
+        LogWorker,
+        GraphWindow,
+        resource_path,
+    )
 except:
     import constants
     import ifaces
     from s2ttypes import SessionStatus, BodyEnum
-    from common import add_spacer, LoggerDialog, get_custom_logger, LogWorker, GraphWindow, \
-        resource_path
+    from common import (
+        add_spacer,
+        LoggerDialog,
+        get_custom_logger,
+        LogWorker,
+        GraphWindow,
+        resource_path,
+    )
 
 """___Authorship___"""
-__author__ = 'Javier Gatón Herguedas'
+__author__ = "Javier Gatón Herguedas"
 __created__ = "2022/03/18"
 __maintainer__ = "Javier Gatón Herguedas"
 __email__ = "gaton@goa.uva.es"
 __status__ = "Development"
 
+
 class BodyMenuWidget(QtWidgets.QWidget):
     """
     Body page representing the menu, which will contain the available options for the user.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, title_str: str, options: List[str], description_str: str):
+
+    def __init__(
+        self,
+        body_tab: ifaces.IBodyTabWidget,
+        title_str: str,
+        options: List[str],
+        description_str: str,
+    ):
         """
         Parameters
         ----------
@@ -70,11 +90,15 @@ class BodyMenuWidget(QtWidgets.QWidget):
         self.description_str = description_str
         self.options = options
         self._build_layout()
-    
+
     def _assign_button(self, option):
         but = QtWidgets.QPushButton(option.upper())
+        but.setProperty("class", "central")
         but.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         but.clicked.connect(lambda: self.button_press(option))
+        but.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         return but
 
     def _build_layout(self):
@@ -87,7 +111,9 @@ class BodyMenuWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.title)
         # Description
-        self.description = QtWidgets.QLabel(self.description_str, alignment=QtCore.Qt.AlignCenter)
+        self.description = QtWidgets.QLabel(
+            self.description_str, alignment=QtCore.Qt.AlignCenter
+        )
         self.description.setObjectName("section_description")
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addWidget(self.description)
@@ -96,7 +122,6 @@ class BodyMenuWidget(QtWidgets.QWidget):
         self.buttons = []
         for option in self.options:
             but = self._assign_button(option)
-            but.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
             add_spacer(self.content_layout, self.v_spacers)
             self.content_layout.addWidget(but)
             self.buttons.append(but)
@@ -105,12 +130,12 @@ class BodyMenuWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
-    
+
     @QtCore.Slot()
     def button_press(self, option: str):
         """
         Option button has been pressed.
-        
+
         Parameters
         ----------
         option : str
@@ -118,10 +143,12 @@ class BodyMenuWidget(QtWidgets.QWidget):
         """
         self.body_tab.change_to_view(option)
 
+
 _TRACK_LOGTITLE = "TRACK"
 _CROSS_LOGTITLE = "CROSS"
 _MESH_LOGTITLE = "MESH"
 _BLACK_LOGTITLE = "BLACK"
+
 
 def _create_log_file_name(logfolder: str, option: str) -> str:
     dt = datetime.utcnow()
@@ -130,18 +157,26 @@ def _create_log_file_name(logfolder: str, option: str) -> str:
     logfile = path.join(logfolder, logfile)
     return logfile
 
+
 def _close_logger(logger: logging.Logger):
     handlers = logger.handlers[:]
     for handler in handlers:
         logger.removeHandler(handler)
         handler.close()
 
+
 class BodyTrackWidget(QtWidgets.QWidget):
     """
     Body page that contains the tracking functionality.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, session_status: SessionStatus,
-        kernels_path: str = ""):
+
+    def __init__(
+        self,
+        body_tab: ifaces.IBodyTabWidget,
+        body: BodyEnum,
+        session_status: SessionStatus,
+        kernels_path: str = "",
+    ):
         """
         Parameters
         ----------
@@ -182,7 +217,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.input_layout = QtWidgets.QVBoxLayout()
         # Seconds
         self.seconds_layout = QtWidgets.QHBoxLayout()
-        self.seconds_label = QtWidgets.QLabel("Seconds:", alignment=QtCore.Qt.AlignCenter)
+        self.seconds_label = QtWidgets.QLabel(
+            "Seconds:", alignment=QtCore.Qt.AlignCenter
+        )
         self.seconds_input = QtWidgets.QDoubleSpinBox()
         self.seconds_input.setMinimum(1)
         self.seconds_input.setMaximum(10000)
@@ -223,13 +260,20 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.log_handler = LoggerDialog()
         self.content_layout.addWidget(self.log_handler)
         self.log_handlers = [self.log_handler.get_handler()]
-        self.log_handler.setVisible(False)
         # Finish content
-        self.track_button = QtWidgets.QPushButton("Start")
+        self.track_button = QtWidgets.QPushButton("START")
         self.track_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.track_button.setProperty("class", "actionstart")
+        self.track_button.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.track_button.clicked.connect(self.track_button_press)
-        self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.cancel_button = QtWidgets.QPushButton("CANCEL")
         self.cancel_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.cancel_button.setProperty("class", "actionstart")
+        self.cancel_button.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.cancel_button.clicked.connect(self.cancel_button_press)
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.track_button)
@@ -257,20 +301,30 @@ class BodyTrackWidget(QtWidgets.QWidget):
         spec.to_npl_format()
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
-        x_data = [i for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN+1)]
+        x_data = [i for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN + 1)]
         y_data = spec.spec_buffer
         self.graph.update_plot(x_data, y_data)
         self.graph.update_headers(spec)
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             vh = spec.fr_spectrum_header.v_header
-            print("it: {}, drift: {}, VNIR header: {}".format(asdc.ITimeEnum(vh.it).to_str(), vh.drift, vh), file=f)
+            print(
+                "it: {}, drift: {}, VNIR header: {}".format(
+                    asdc.ITimeEnum(vh.it).to_str(), vh.drift, vh
+                ),
+                file=f,
+            )
             s1h = spec.fr_spectrum_header.s1_header
             print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
             s2h = spec.fr_spectrum_header.s2_header
             print("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset), file=f)
             print("", file=f)
             for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
-                print("{:.3f}\t{:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
+                print(
+                    "{:.3f}\t{:.3f}".format(
+                        i + asdc.MIN_WLEN, spec.spec_buffer[i]
+                    ).replace(".", ","),
+                    file=f,
+                )
             f.close()
 
     @QtCore.Slot()
@@ -286,7 +340,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(True)
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
-        self.logfile = _create_log_file_name(self.session_status.logfolder, _TRACK_LOGTITLE)
+        self.logfile = _create_log_file_name(
+            self.session_status.logfolder, _TRACK_LOGTITLE
+        )
         self.call_asd = self.asd_checkbox.isChecked()
         self.use_custom_itime = self.asd_itime_checkbox.isChecked()
         instrument_delay = 5
@@ -294,7 +350,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
             cs = self.session_status
             seconds = self.seconds_input.value()
             altitude = cs.height
-            self.logger = common.create_file_logger(self.logfile, self.log_handlers, logging.WARNING)
+            self.logger = common.create_file_logger(
+                self.logfile, self.log_handlers, logging.WARNING
+            )
 
             callback = None
             if self.call_asd:
@@ -304,16 +362,34 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 library = psc.SunLibrary.SPICEDSUNSAFE
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
-                    library, altitude, self.kernels_path, inst_callback=callback,
-                    instrument_delay=instrument_delay)
+                self.tracker = aut.SunTracker(
+                    cs.ip,
+                    seconds,
+                    cs.port,
+                    cs.password,
+                    self.logger,
+                    library,
+                    altitude,
+                    self.kernels_path,
+                    inst_callback=callback,
+                    instrument_delay=instrument_delay,
+                )
             else:
                 library = psc.MoonLibrary.SPICEDMOONSAFE
                 if self.kernels_path is None or self.kernels_path == "":
                     library = psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, self.logger,
-                    library, altitude, self.kernels_path, inst_callback=callback,
-                    instrument_delay=instrument_delay)
+                self.tracker = aut.MoonTracker(
+                    cs.ip,
+                    seconds,
+                    cs.port,
+                    cs.password,
+                    self.logger,
+                    library,
+                    altitude,
+                    self.kernels_path,
+                    inst_callback=callback,
+                    instrument_delay=instrument_delay,
+                )
             if self.call_asd:
                 self.connect_asd_then_start()
             else:
@@ -329,7 +405,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         finished = QtCore.Signal()
         exception = QtCore.Signal(Exception)
 
-        def __init__(self, track_widget: 'BodyTrackWidget', ip: str, port: int):
+        def __init__(self, track_widget: "BodyTrackWidget", ip: str, port: int):
             super().__init__()
             self.track_widget = track_widget
             self.ip = ip
@@ -345,14 +421,16 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 library = psc.SunLibrary.SPICEDSUNSAFE
                 if kp is None or kp == "":
                     library = psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
-                    library, altitude, kp)
+                self.tracker = aut.SunTracker(
+                    cs.ip, seconds, cs.port, cs.password, logger, library, altitude, kp
+                )
             else:
                 library = psc.MoonLibrary.SPICEDMOONSAFE
                 if kp is None or kp == "":
                     library = psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
-                    library, altitude, kp)
+                self.tracker = aut.MoonTracker(
+                    cs.ip, seconds, cs.port, cs.password, logger, library, altitude, kp
+                )
             self.tracker.start()
 
         def _stop_tracking_sync(self):
@@ -361,7 +439,11 @@ class BodyTrackWidget(QtWidgets.QWidget):
                 while not self.tracker.is_finished():
                     time.sleep(1)
 
-        def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
+        def _initiate_asd_ctr(
+            self,
+            use_custom_itime: bool,
+            custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms,
+        ):
             self.track_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
             self.track_widget.asd_ctr.restore()
             self.track_widget.asd_ctr.optimize()
@@ -371,7 +453,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
         def run(self):
             try:
                 self._start_tracking_body()
-                time.sleep(5) # Wait enough time so the tracker has sent at least the first position
+                time.sleep(
+                    5
+                )  # Wait enough time so the tracker has sent at least the first position
                 self._stop_tracking_sync()
                 self._initiate_asd_ctr(self.track_widget.use_custom_itime)
                 self.track_widget.logger.info("Stopped tracking after optimization.")
@@ -393,8 +477,9 @@ class BodyTrackWidget(QtWidgets.QWidget):
 
     def connect_asd_then_start(self):
         self.asd_th = QtCore.QThread()
-        self.asd_worker = BodyTrackWidget.ConnectASDWorker(self, self.session_status.asd_ip,
-            self.session_status.asd_port)
+        self.asd_worker = BodyTrackWidget.ConnectASDWorker(
+            self, self.session_status.asd_ip, self.session_status.asd_port
+        )
         self.asd_worker.moveToThread(self.asd_th)
         self.asd_th.started.connect(self.asd_worker.run)
         self.asd_worker.finished.connect(self.asd_th.quit)
@@ -412,6 +497,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
         """
         Worker that will finish the tracking.
         """
+
         finished = QtCore.Signal()
 
         def __init__(self, tracker: aut._BodyTracker):
@@ -460,15 +546,24 @@ class BodyTrackWidget(QtWidgets.QWidget):
             self.asd_checkbox.setEnabled(True)
             self.asd_itime_checkbox.setEnabled(True)
 
+
 DEFAULT_VALUE_COUNTDOWN_AUTOMATIC = 1
 DEFAULT_VALUE_COUNTDOWN_MANUAL = 3
+
 
 class BodyCrossWidget(QtWidgets.QWidget):
     """
     Body page that contains the cross and mesh functionalities.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, session_status: SessionStatus,
-        kernels_path: str = "", is_mesh: bool = False):
+
+    def __init__(
+        self,
+        body_tab: ifaces.IBodyTabWidget,
+        body: BodyEnum,
+        session_status: SessionStatus,
+        kernels_path: str = "",
+        is_mesh: bool = False,
+    ):
         """
         Parameters
         ----------
@@ -506,10 +601,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
             super().__init__()
             self.widget = label
             self.zero_msg = "MEASURE NOW"
-        
+
         def set_zero_msg(self, zero_msg: str):
             self.zero_msg = zero_msg
-        
+
         def start_handler(self):
             self.worker = LogWorker()
 
@@ -527,7 +622,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         def emit(self, record):
             msg = self.format(record)
             if "COUNTDOWN:" in msg:
-                num_str = msg[msg.rindex(':')+1:]
+                num_str = msg[msg.rindex(":") + 1 :]
                 self.worker.callback(num_str)
 
         def handle_data(self, msg: str):
@@ -540,12 +635,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
             except:
                 label_msg = "ERROR"
             self.widget.setText(label_msg)
-    
+
     class StepInfoHandler(logging.Handler):
         def __init__(self, callback_next_step: Callable):
             super().__init__()
             self.callback_next_step = callback_next_step
-        
+
         def start_handler(self):
             self.worker = LogWorker()
 
@@ -578,7 +673,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.content_layout = QtWidgets.QVBoxLayout()
         # Range
         self.range_layout = QtWidgets.QHBoxLayout()
-        self.range_label = QtWidgets.QLabel("Range (°):", alignment=QtCore.Qt.AlignCenter)
+        self.range_label = QtWidgets.QLabel(
+            "Range (°):", alignment=QtCore.Qt.AlignCenter
+        )
         self.range_first_input = QtWidgets.QDoubleSpinBox()
         self.range_second_input = QtWidgets.QDoubleSpinBox()
         self.range_first_input.setMinimum(-100)
@@ -608,7 +705,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.step_layout, self.h_spacers)
         # Countdown
         self.countdown_layout = QtWidgets.QHBoxLayout()
-        self.countdown_label = QtWidgets.QLabel("Countdown (sec.):", alignment=QtCore.Qt.AlignCenter)
+        self.countdown_label = QtWidgets.QLabel(
+            "Countdown (sec.):", alignment=QtCore.Qt.AlignCenter
+        )
         self.countdown_input = QtWidgets.QSpinBox()
         self.countdown_input.setMinimum(-100)
         self.countdown_input.setMaximum(100)
@@ -620,7 +719,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.countdown_layout, self.h_spacers)
         # Rest
         self.rest_layout = QtWidgets.QHBoxLayout()
-        self.rest_label = QtWidgets.QLabel("Rest (sec.):", alignment=QtCore.Qt.AlignCenter)
+        self.rest_label = QtWidgets.QLabel(
+            "Rest (sec.):", alignment=QtCore.Qt.AlignCenter
+        )
         self.rest_input = QtWidgets.QSpinBox()
         self.rest_input.setMinimum(-100)
         self.rest_input.setMaximum(100)
@@ -632,9 +733,13 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.rest_layout, self.h_spacers)
         # Current step and remaining
         self.step_info_lay = QtWidgets.QHBoxLayout()
-        self.next_step_label = QtWidgets.QLabel("Next step:", alignment=QtCore.Qt.AlignCenter)
+        self.next_step_label = QtWidgets.QLabel(
+            "Next step:", alignment=QtCore.Qt.AlignCenter
+        )
         self.next_step = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
-        self.remaining_steps_label = QtWidgets.QLabel("Performed steps:", alignment=QtCore.Qt.AlignCenter)
+        self.remaining_steps_label = QtWidgets.QLabel(
+            "Performed steps:", alignment=QtCore.Qt.AlignCenter
+        )
         self.rem_steps = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         add_spacer(self.step_info_lay, self.h_spacers)
         self.step_info_lay.addWidget(self.next_step_label)
@@ -646,12 +751,16 @@ class BodyCrossWidget(QtWidgets.QWidget):
         self.step_info_lay.addWidget(self.rem_steps)
         add_spacer(self.step_info_lay, self.h_spacers)
         self.step_info_set_visible(False)
-        self.step_info_handler = BodyCrossWidget.StepInfoHandler(self.next_step_detected)
+        self.step_info_handler = BodyCrossWidget.StepInfoHandler(
+            self.next_step_detected
+        )
         self.log_handlers = [self.step_info_handler]
         # Countdown
         self.log_countdown_label = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
         self.log_countdown_label.setObjectName("countdown")
-        self.log_countdown = BodyCrossWidget.QLabelCrossCountdownLogger(self.log_countdown_label)
+        self.log_countdown = BodyCrossWidget.QLabelCrossCountdownLogger(
+            self.log_countdown_label
+        )
         self.log_handlers += [self.log_countdown]
         self.log_countdown_label.setVisible(False)
         # Logger
@@ -678,11 +787,13 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.asd_input_layout, self.h_spacers)
         self.asd_input_layout.addWidget(self.asd_itime_checkbox)
         # Start button
-        self.start_button = QtWidgets.QPushButton("Start {}".format(self.op_name))
+        self.start_button = QtWidgets.QPushButton(f"Start {self.op_name}".upper())
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.start_button.setProperty("class", "actionstart")
         self.start_button.clicked.connect(self.press_start_cross)
         # Cancel button
-        self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.cancel_button = QtWidgets.QPushButton("CANCEL")
+        self.cancel_button.setProperty("class", "actionstart")
         self.cancel_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.cancel_button.clicked.connect(self.cancel_button_press)
         self.cancel_button.setVisible(False)
@@ -712,7 +823,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
-    
+
     @QtCore.Slot()
     def asd_checkbox_changed(self):
         using_asd = self.asd_checkbox.isChecked()
@@ -731,7 +842,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
     def update_info_steps(self):
         if self.measured_steps < len(self.steps):
             next_offset = self.steps[self.measured_steps]
-            self.next_step.setText("A{:+.2f}; Z{:+.2f}".format(next_offset[0], next_offset[1]))
+            self.next_step.setText(
+                "A{:+.2f}; Z{:+.2f}".format(next_offset[0], next_offset[1])
+            )
         else:
             self.next_step.setText("Finished")
         self.rem_steps.setText("{}/{}".format(self.measured_steps, len(self.steps)))
@@ -744,17 +857,34 @@ class BodyCrossWidget(QtWidgets.QWidget):
         # Generating the offsets for the visual feedback
         if self.is_mesh:
             offsets: List[Tuple[float, float]] = []
-            for i in np.arange(cp.azimuth_min_offset, cp.azimuth_max_offset + cp.azimuth_step,
-                    cp.azimuth_step):
-                for j in np.arange(cp.zenith_min_offset, cp.zenith_max_offset + cp.zenith_step,
-                        cp.zenith_step):
-                    offsets.append((i,j))
+            for i in np.arange(
+                cp.azimuth_min_offset,
+                cp.azimuth_max_offset + cp.azimuth_step,
+                cp.azimuth_step,
+            ):
+                for j in np.arange(
+                    cp.zenith_min_offset,
+                    cp.zenith_max_offset + cp.zenith_step,
+                    cp.zenith_step,
+                ):
+                    offsets.append((i, j))
         else:
-            offsets: List[Tuple[float, float]] = \
-                [(i, 0) for i in np.arange(cp.azimuth_min_offset, cp.azimuth_max_offset +
-                    cp.azimuth_step, cp.azimuth_step)]
-            offsets += [(0, i) for i in np.arange(cp.zenith_min_offset, cp.zenith_max_offset +
-                cp.zenith_step, cp.zenith_step)]
+            offsets: List[Tuple[float, float]] = [
+                (i, 0)
+                for i in np.arange(
+                    cp.azimuth_min_offset,
+                    cp.azimuth_max_offset + cp.azimuth_step,
+                    cp.azimuth_step,
+                )
+            ]
+            offsets += [
+                (0, i)
+                for i in np.arange(
+                    cp.zenith_min_offset,
+                    cp.zenith_max_offset + cp.zenith_step,
+                    cp.zenith_step,
+                )
+            ]
         self.steps = offsets
         self.measured_steps = 0
         self.update_info_steps()
@@ -764,9 +894,14 @@ class BodyCrossWidget(QtWidgets.QWidget):
         dt = datetime.utcnow()
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
-        with open(filename, 'w') as f:
-            print("it: {}. Drift: {}".format(spec.fr_spectrum_header.v_header.it,
-                spec.fr_spectrum_header.v_header.drift), file=f)
+        with open(filename, "w") as f:
+            print(
+                "it: {}. Drift: {}".format(
+                    spec.fr_spectrum_header.v_header.it,
+                    spec.fr_spectrum_header.v_header.drift,
+                ),
+                file=f,
+            )
             s1h = spec.fr_spectrum_header.s1_header
             print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
             s2h = spec.fr_spectrum_header.s2_header
@@ -774,7 +909,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
             print("", file=f)
             spec.to_npl_format()
             for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
-                print("{:.3f}\t{:.3f}".format(i + asdc.MIN_WLEN, spec.spec_buffer[i]).replace(".",","), file=f)
+                print(
+                    "{:.3f}\t{:.3f}".format(
+                        i + asdc.MIN_WLEN, spec.spec_buffer[i]
+                    ).replace(".", ","),
+                    file=f,
+                )
             f.close()
 
     @QtCore.Slot()
@@ -815,7 +955,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         except Exception as e:
             self.logger.error(e)
             self.finished_crossing()
-    
+
     def initiate_crosser(self):
         cs = self.session_status
         az_min = ze_min = self.range_first_input.value()
@@ -823,8 +963,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         az_step = ze_step = self.step_input.value()
         countdown = self.countdown_input.value()
         rest = self.rest_input.value()
-        cp = cali.CalibrationParameters(az_min, az_max, az_step, ze_min, ze_max, ze_step,
-            countdown, rest)
+        cp = cali.CalibrationParameters(
+            az_min, az_max, az_step, ze_min, ze_max, ze_step, countdown, rest
+        )
         self.generate_steps(cp)
         altitude = self.session_status.height
 
@@ -835,8 +976,16 @@ class BodyCrossWidget(QtWidgets.QWidget):
             library = psc.SunLibrary.SPICEDSUNSAFE
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.SunLibrary.PYSOLAR
-            args = [cs.ip, cp, library, self.logger, cs.port,
-                    cs.password, altitude, self.kernels_path]
+            args = [
+                cs.ip,
+                cp,
+                library,
+                self.logger,
+                cs.port,
+                cs.password,
+                altitude,
+                self.kernels_path,
+            ]
             if self.is_mesh:
                 self.crosser = cali.SolarMesh(*args, inst_callback=callback)
             else:
@@ -845,8 +994,16 @@ class BodyCrossWidget(QtWidgets.QWidget):
             library = psc.MoonLibrary.SPICEDMOONSAFE
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.MoonLibrary.EPHEM_MOON
-            args = [cs.ip, cp, library, self.logger, cs.port,
-                    cs.password, altitude, self.kernels_path]
+            args = [
+                cs.ip,
+                cp,
+                library,
+                self.logger,
+                cs.port,
+                cs.password,
+                altitude,
+                self.kernels_path,
+            ]
             if self.is_mesh:
                 self.crosser = cali.LunarMesh(*args, inst_callback=callback)
             else:
@@ -867,6 +1024,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         """
         Worker that will check for the cross to finish.
         """
+
         finished = QtCore.Signal()
 
         def __init__(self, crosser: Union[cali._BodyCross, cali._BodyMesh]):
@@ -899,12 +1057,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
         finished = QtCore.Signal()
         exception = QtCore.Signal(Exception)
 
-        def __init__(self, cross_widget: 'BodyCrossWidget', ip: str, port: int):
+        def __init__(self, cross_widget: "BodyCrossWidget", ip: str, port: int):
             super().__init__()
             self.cross_widget = cross_widget
             self.ip = ip
             self.port = port
-        
+
         def _start_tracking_body(self):
             logger = get_custom_logger(self.cross_widget.logfile, [])
             cs = self.cross_widget.session_status
@@ -915,23 +1073,29 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 library = psc.SunLibrary.SPICEDSUNSAFE
                 if kp is None or kp == "":
                     library = psc.SunLibrary.PYSOLAR
-                self.tracker = aut.SunTracker(cs.ip, seconds, cs.port, cs.password, logger,
-                    library, altitude, kp)
+                self.tracker = aut.SunTracker(
+                    cs.ip, seconds, cs.port, cs.password, logger, library, altitude, kp
+                )
             else:
                 library = psc.MoonLibrary.SPICEDMOONSAFE
                 if kp is None or kp == "":
                     library = psc.MoonLibrary.EPHEM_MOON
-                self.tracker = aut.MoonTracker(cs.ip, seconds, cs.port, cs.password, logger,
-                    library, altitude, kp)
+                self.tracker = aut.MoonTracker(
+                    cs.ip, seconds, cs.port, cs.password, logger, library, altitude, kp
+                )
             self.tracker.start()
-        
+
         def _stop_tracking_sync(self):
             if not self.tracker.is_finished():
                 self.tracker.stop()
                 while not self.tracker.is_finished():
                     time.sleep(1)
 
-        def _initiate_asd_ctr(self, use_custom_itime: bool, custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms):
+        def _initiate_asd_ctr(
+            self,
+            use_custom_itime: bool,
+            custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms,
+        ):
             self.cross_widget.asd_ctr = asdc.ASDController(self.ip, self.port)
             self.cross_widget.asd_ctr.restore()
             self.cross_widget.asd_ctr.optimize()
@@ -941,7 +1105,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
         def run(self):
             try:
                 self._start_tracking_body()
-                time.sleep(5) # Wait enough time so the tracker has sent at least the first position
+                time.sleep(
+                    5
+                )  # Wait enough time so the tracker has sent at least the first position
                 self._stop_tracking_sync()
                 self._initiate_asd_ctr(self.cross_widget.use_custom_itime)
                 self.cross_widget.logger.info("Stopped tracking after optimization.")
@@ -955,8 +1121,9 @@ class BodyCrossWidget(QtWidgets.QWidget):
 
     def connect_asd_then_start(self):
         self.asd_th = QtCore.QThread()
-        self.asd_worker = BodyCrossWidget.ConnectASDWorker(self, self.session_status.asd_ip,
-            self.session_status.asd_port)
+        self.asd_worker = BodyCrossWidget.ConnectASDWorker(
+            self, self.session_status.asd_ip, self.session_status.asd_port
+        )
         self.asd_worker.moveToThread(self.asd_th)
         self.asd_th.started.connect(self.asd_worker.run)
         self.asd_worker.finished.connect(self.asd_th.quit)
@@ -974,7 +1141,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
         "Slot for the GUI action of pressing the cancel crossing button."
         self.cancel_button.setDisabled(True)
         self.crosser.stop()
-    
+
     def finished_crossing(self):
         """Crossing finished/stopped. Perform the needed actions."""
         self.body_tab.set_enabled_close_button(True)
@@ -997,12 +1164,19 @@ class BodyCrossWidget(QtWidgets.QWidget):
         if self.call_asd and self.asd_ctr is not None:
             self.asd_ctr.close()
 
+
 class BodyBlackWidget(QtWidgets.QWidget):
     """
     Body page that contains the black moon functionality.
     """
-    def __init__(self, body_tab: ifaces.IBodyTabWidget, body: BodyEnum, session_status: SessionStatus,
-        kernels_path: str = ""):
+
+    def __init__(
+        self,
+        body_tab: ifaces.IBodyTabWidget,
+        body: BodyEnum,
+        session_status: SessionStatus,
+        kernels_path: str = "",
+    ):
         """
         Parameters
         ----------
@@ -1039,7 +1213,8 @@ class BodyBlackWidget(QtWidgets.QWidget):
         # Content
         self.content_layout = QtWidgets.QVBoxLayout()
         # Start button
-        self.start_button = QtWidgets.QPushButton("Perform Black")
+        self.start_button = QtWidgets.QPushButton("PERFORM BLACK")
+        self.start_button.setProperty("class", "actionstart")
         self.start_button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.start_button.clicked.connect(self.press_start_black)
         add_spacer(self.content_layout, self.v_spacers)
@@ -1056,7 +1231,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
-    
+
     @QtCore.Slot()
     def press_start_black(self):
         """
@@ -1068,7 +1243,9 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.log_handler.start_handler()
         self.body_tab.set_enabled_close_button(False)
         self.is_finished = common.ContainedBool(False)
-        self.logfile = _create_log_file_name(self.session_status.logfolder, _BLACK_LOGTITLE)
+        self.logfile = _create_log_file_name(
+            self.session_status.logfolder, _BLACK_LOGTITLE
+        )
         try:
             cs = self.session_status
             altitude = cs.height
@@ -1076,8 +1253,19 @@ class BodyBlackWidget(QtWidgets.QWidget):
             library = psc.MoonLibrary.SPICEDMOONSAFE
             if self.kernels_path is None or self.kernels_path == "":
                 library = psc.MoonLibrary.EPHEM_MOON
-            self.black_thread = Thread(target=cali.black_moon, args=[cs.ip, self.logger, cs.port,
-                cs.password, self.is_finished, library, altitude, self.kernels_path])
+            self.black_thread = Thread(
+                target=cali.black_moon,
+                args=[
+                    cs.ip,
+                    self.logger,
+                    cs.port,
+                    cs.password,
+                    self.is_finished,
+                    library,
+                    altitude,
+                    self.kernels_path,
+                ],
+            )
             self.black_thread.start()
             self.start_checking_black_end()
         except:
@@ -1087,6 +1275,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         """
         Worker that will check for the black to finish.
         """
+
         finished = QtCore.Signal()
 
         def __init__(self, is_finished: common.ContainedBool):
@@ -1114,7 +1303,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.worker.finished.connect(self.finished_black)
         self.th.finished.connect(self.th.deleteLater)
         self.th.start()
-    
+
     def finished_black(self):
         """Black finished/stopped. Perform the needed actions."""
         self.body_tab.set_enabled_close_button(True)

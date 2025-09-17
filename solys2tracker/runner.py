@@ -30,11 +30,13 @@ except:
     from s2ttypes import SessionStatus
     from common import resource_path
 
+
 class NavBarWidget(QtWidgets.QWidget):
     """
     Navigaton bar that allows the user to change between tabs.
     """
-    def __init__(self, solys2_w : ifaces.ISolys2Widget, session_status: SessionStatus):
+
+    def __init__(self, solys2_w: ifaces.ISolys2Widget, session_status: SessionStatus):
         """
         Parameters
         ----------
@@ -79,7 +81,7 @@ class NavBarWidget(QtWidgets.QWidget):
         """
         enabled = self.session_status.is_connected
         self.set_enabled_buttons(enabled)
-    
+
     @QtCore.Slot()
     def press_sun(self):
         """Press the SUN button."""
@@ -95,9 +97,12 @@ class NavBarWidget(QtWidgets.QWidget):
         """Press the CONFIGURATION button."""
         self.solys2_w.change_tab_conf()
 
-class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict.makecls()):
+
+class Solys2Widget(
+    QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict.makecls()
+):
     """Main widget that will contain the main functionality and other widgets.
-    
+
     Attributes
     ----------
     kernel_path : str
@@ -113,6 +118,7 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
     can_close : bool
         Flag that lets the window know if the widget should not be closed.
     """
+
     def __init__(self, kernel_path: str = constants.KERNELS_PATH):
         """
         Parameters
@@ -123,26 +129,28 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         super().__init__()
         self.kernel_path = kernel_path
         self.is_connected = False
-        self.session_status = SessionStatus(None, None, None, False, None, None, None,
-            None, None, None)
+        self.session_status = SessionStatus(
+            None, None, None, False, None, None, None, None, None, None
+        )
         self.can_close = True
         self._build_layout()
-    
+
     def _build_layout(self):
         self.navbar_w = NavBarWidget(self, self.session_status)
-        self.content_w: Union[ConfigurationWidget, SunTabWidget] = \
-            ConfigurationWidget(self, self.session_status)
+        self.content_w: Union[ConfigurationWidget, SunTabWidget] = ConfigurationWidget(
+            self, self.session_status
+        )
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.addWidget(self.navbar_w)
         self.main_layout.addWidget(self.content_w)
-    
+
     def connection_changed(self):
         """
         Function called when the connection status (self.session_status) has changed.
         It will update the navigation bar and the GUI.
         """
         self.navbar_w.update_button_enabling()
-    
+
     def set_disabled_navbar(self, disabled: bool):
         """
         Set the disabled status for all the navbar buttons.
@@ -153,7 +161,7 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
             Disabled status.
         """
         self.navbar_w.set_enabled_buttons(not disabled)
-    
+
     def set_enabled_close_button(self, enabled: bool):
         """
         Set the enabled status for the close button.
@@ -167,6 +175,7 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
 
     class TabEnum(Enum):
         """Enum representing all existing tabs"""
+
         SUN = 0
         MOON = 1
         CONF = 2
@@ -174,7 +183,7 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
     def _change_tab(self, tab: TabEnum):
         """
         Changes tab to the chosen one.
-        
+
         Parameters
         ----------
         tab : TabEnum
@@ -208,13 +217,15 @@ class Solys2Widget(QtWidgets.QWidget, ifaces.ISolys2Widget, metaclass=noconflict
         """
         self._change_tab(Solys2Widget.TabEnum.CONF)
 
+
 class CloseConfirmationWidget(QtWidgets.QWidget):
     """Widget for the subwindow of close confirmation"""
-    def __init__(self, main_win: 'MainWindow'):
+
+    def __init__(self, main_win: "MainWindow"):
         super().__init__()
         self.main_win = main_win
         self._build_layout()
-    
+
     def _build_layout(self):
         self.main_layout = QtWidgets.QVBoxLayout(self)
         # Title
@@ -233,15 +244,16 @@ class CloseConfirmationWidget(QtWidgets.QWidget):
         self.but_layout.addWidget(self.but_cancel)
         self.but_layout.addWidget(self.but_close)
         self.main_layout.addLayout(self.but_layout)
-    
+
     @QtCore.Slot()
     def press_cancel(self):
         self.close()
         self.window().close()
-    
+
     @QtCore.Slot()
     def press_close(self):
         self.main_win.confirmed_close()
+
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main window that will contain the main widget."""
@@ -267,7 +279,7 @@ class MainWindow(QtWidgets.QMainWindow):
         close_win.show()
         self.dialogs.append(close_win)
         event.ignore()
-    
+
     def confirmed_close(self) -> None:
         """Closes completely the program"""
         solys2_w: Solys2Widget = self.centralWidget()
@@ -275,6 +287,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.close()
         QtCore.QCoreApplication.quit()
         os_kill(os_getpid(), 9)
+
 
 def filepathToStr(filepath: str) -> str:
     """Given filepath it returns its contents as a string
@@ -298,6 +311,7 @@ def filepathToStr(filepath: str) -> str:
         print("Error opening file", abs_path)
     return data
 
+
 def main():
     args = sys.argv[1:]
     kernels_path = constants.KERNELS_PATH
@@ -306,14 +320,15 @@ def main():
     app = QtWidgets.QApplication([constants.APPLICATION_NAME])
     window = MainWindow()
     main_widget = Solys2Widget(kernels_path)
-    window.resize(650, 450)
+    window.resize(650, 500)
     window.setCentralWidget(main_widget)
     window.show()
     window.setWindowTitle(constants.APPLICATION_NAME)
     window.setStyleSheet(filepathToStr(constants.MAIN_QSS_PATH))
     window.setWindowIcon(QtGui.QIcon(resource_path(constants.ICON_PATH)))
-    
+
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
