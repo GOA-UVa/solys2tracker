@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased] - yyyy-mm-dd
 
+### Added
+- Solys2 password is now stored in localdata, to avoid having to write it all the time if its not the default one.
+
 ### Changed
 - Using solys2==v0.2.7
 - Using appdata

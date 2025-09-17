@@ -1,11 +1,6 @@
-"""___Built-In Modules___"""
 from enum import Enum
 from dataclasses import dataclass
 
-"""___Third-Party Modules___"""
-# import here
-
-"""___Solys2Tracker Modules___"""
 try:
     from solys2tracker import localdata
 except:
@@ -37,7 +32,7 @@ class SessionStatus:
         if self.port is None:
             self.port = 15000
         if self.password is None:
-            self.password = "solys"
+            self.password = self._get_password_data()
         if self.is_connected is None:
             self.is_connected = False
         if self.logfolder is None:
@@ -54,9 +49,15 @@ class SessionStatus:
             self.asd_port = self._get_asd_port_data()
         if self.asd_folder is None:
             self.asd_folder = self._get_asd_folder_data()
-    
+
     def _get_ip_data(self) -> str:
         return localdata.get_value("ip")
+
+    def _get_password_data(self) -> str:
+        psw = localdata.get_value("password")
+        if not psw:
+            psw = "solys"
+        return psw
 
     def _get_kernels_path_data(self) -> str:
         return localdata.get_value("kernels_path")
@@ -84,7 +85,10 @@ class SessionStatus:
 
     def save_ip_data(self):
         localdata.save_value("ip", self.ip)
-    
+
+    def save_password_data(self):
+        localdata.save_value("password", self.password)
+
     def save_kernels_path_data(self):
         localdata.save_value("kernels_path", self.kernels_path)
 

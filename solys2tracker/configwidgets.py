@@ -332,6 +332,7 @@ class ConnectionWidget(QtWidgets.QWidget):
         connect_msg = "Connect"
         if is_connected:
             self.session_status.save_ip_data()
+            self.session_status.save_password_data()
             label_color = constants.COLOR_GREEN
             connect_msg = "Reconnect"
         self.connect_but.setText(connect_msg)
