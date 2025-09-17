@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # "## [unreleased] - yyyy-mm-dd"
 
-## [unreleased] - yyyy-mm-dd
+## [0.2.3] - 2025-09-17
 
 ### Added
 - Solys2 password is now stored in localdata, to avoid having to write it all the time if its not the default one.
@@ -103,7 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConnectASDWorker Tracker has logger that logs only to the logfile.
 
 
-[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.2...HEAD
+[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/javgat/solys2tracker/-/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/javgat/solys2tracker/-/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/javgat/solys2tracker/-/compare/v0.2.0-beta.5...v0.2.1
 [0.2.0]: https://gitlab.com/javgat/solys2tracker/-/releases/v0.2.0-beta.5
