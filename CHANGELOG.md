@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Solys2 password is now stored in localdata, to avoid having to write it all the time if its not the default one.
 - Slightly improve UI/UX with bigger buttons and bigger fonts in some buttons.
+- Moon Black option can now measure using the ASD after achieving the black position.
 
 ### Changed
 - Using solys2==v0.2.7

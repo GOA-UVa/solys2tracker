@@ -15,7 +15,7 @@ import time
 from threading import Thread
 import logging
 from os import path
-from datetime import datetime
+from datetime import datetime, timezone
 
 """___Third-Party Modules___"""
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -297,7 +297,7 @@ class BodyTrackWidget(QtWidgets.QWidget):
 
     def asd_acquire(self):
         spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
-        dt = datetime.utcnow()
+        dt = datetime.now(timezone.utc)
         spec.to_npl_format()
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
@@ -891,10 +891,10 @@ class BodyCrossWidget(QtWidgets.QWidget):
 
     def asd_acquire(self):
         spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
-        dt = datetime.utcnow()
+        dt = datetime.now(timezone.utc)
         filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
         filename = path.join(self.session_status.asd_folder, filename)
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             print(
                 "it: {}. Drift: {}".format(
                     spec.fr_spectrum_header.v_header.it,
@@ -1199,6 +1199,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.title_str = self.title_str + " | " + constants.BLACK_STR
         self.session_status = session_status
         self.kernels_path = kernels_path
+        self.asd_ctr = None
         self._build_layout()
 
     def _build_layout(self):
@@ -1225,12 +1226,41 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.log_handler.setVisible(False)
         add_spacer(self.content_layout, self.v_spacers)
         self.content_layout.addWidget(self.log_handler)
+        # ASD Checkbox
+        self.asd_checkbox = QtWidgets.QCheckBox("Measure automatically with ASD")
+        # ASD itime checkbox
+        self.asd_itime_checkbox = QtWidgets.QCheckBox("Use 544ms as integration time")
+        self.asd_checkbox.stateChanged.connect(self.asd_checkbox_changed)
+        if self.session_status.asd_ip is not None and self.session_status.asd_ip != "":
+            self.asd_checkbox.setChecked(True)
+            self.asd_itime_checkbox.setChecked(True)
+        else:
+            self.asd_checkbox.setChecked(False)
+            self.asd_checkbox.setDisabled(True)
+            self.asd_itime_checkbox.setChecked(False)
+            self.asd_itime_checkbox.setDisabled(True)
+        self.asd_input_layout = QtWidgets.QHBoxLayout()
+        add_spacer(self.asd_input_layout, self.h_spacers)
+        self.asd_input_layout.addWidget(self.asd_checkbox)
+        add_spacer(self.asd_input_layout, self.h_spacers)
+        self.asd_input_layout.addWidget(self.asd_itime_checkbox)
+        add_spacer(self.content_layout, self.v_spacers)
+        self.content_layout.addLayout(self.asd_input_layout)
         # Finish content
         add_spacer(self.content_layout, self.v_spacers)
         # Finish layout
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.content_layout, 1)
         add_spacer(self.main_layout, self.v_spacers)
+
+    @QtCore.Slot()
+    def asd_checkbox_changed(self):
+        using_asd = self.asd_checkbox.isChecked()
+        if using_asd:
+            self.asd_itime_checkbox.setDisabled(False)
+        else:
+            self.asd_itime_checkbox.setChecked(False)
+            self.asd_itime_checkbox.setDisabled(True)
 
     @QtCore.Slot()
     def press_start_black(self):
@@ -1246,6 +1276,10 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.logfile = _create_log_file_name(
             self.session_status.logfolder, _BLACK_LOGTITLE
         )
+        self.call_asd = self.asd_checkbox.isChecked()
+        self.use_custom_itime = self.asd_itime_checkbox.isChecked()
+        self.asd_checkbox.setDisabled(True)
+        self.asd_itime_checkbox.setDisabled(True)
         try:
             cs = self.session_status
             altitude = cs.height
@@ -1271,6 +1305,53 @@ class BodyBlackWidget(QtWidgets.QWidget):
         except:
             self.finished_black()
 
+    def _initiate_asd_ctr(
+        self,
+        use_custom_itime: bool,
+        custom_itime: asdc.ITimeEnum = asdc.ITimeEnum.t544ms,
+    ):
+        self.asd_ctr = asdc.ASDController(
+            self.session_status.asd_ip, self.session_status.asd_port
+        )
+        self.asd_ctr.restore()
+        self.asd_ctr.optimize()
+        if use_custom_itime:
+            self.asd_ctr.set_itime(custom_itime)
+
+    def asd_acquire(self):
+        if not self.asd_ctr:
+            self._initiate_asd_ctr(self.use_custom_itime)
+        spec: asdt.FRInterpSpec = self.asd_ctr.acquire(10)
+        dt = datetime.now(timezone.utc)
+        spec.to_npl_format()
+        filename = dt.strftime("%Y_%m_%d_%H_%M_%S.txt")
+        filename = path.join(self.session_status.asd_folder, filename)
+        x_data = [i for i in range(asdc.MIN_WLEN, asdc.MAX_WLEN + 1)]
+        y_data = spec.spec_buffer
+        self.graph.update_plot(x_data, y_data)
+        self.graph.update_headers(spec)
+        with open(filename, "w", encoding="utf-8") as f:
+            vh = spec.fr_spectrum_header.v_header
+            print(
+                "it: {}, drift: {}, VNIR header: {}".format(
+                    asdc.ITimeEnum(vh.it).to_str(), vh.drift, vh
+                ),
+                file=f,
+            )
+            s1h = spec.fr_spectrum_header.s1_header
+            print("gain1: {}, offset1: {}".format(s1h.gain, s1h.offset), file=f)
+            s2h = spec.fr_spectrum_header.s2_header
+            print("gain2: {}, offset2: {}".format(s2h.gain, s2h.offset), file=f)
+            print("", file=f)
+            for i in range(0, asdc.MAX_WLEN - asdc.MIN_WLEN + 1):
+                print(
+                    "{:.3f}\t{:.3f}".format(
+                        i + asdc.MIN_WLEN, spec.spec_buffer[i]
+                    ).replace(".", ","),
+                    file=f,
+                )
+            f.close()
+
     class BlackWorker(QtCore.QObject):
         """
         Worker that will check for the black to finish.
@@ -1290,7 +1371,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
 
         def run(self):
             while not self.is_finished.value:
-                time.sleep(1)
+                time.sleep(0.3)
             self.finished.emit()
 
     def start_checking_black_end(self):
@@ -1304,11 +1385,33 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.th.finished.connect(self.th.deleteLater)
         self.th.start()
 
+    def show_error(self, msg: str):
+        self.logger.error(msg)
+
+    def initialize_graph(self):
+        # Graph
+        self.graph = GraphWindow()
+        self.graph.setWindowTitle(constants.APPLICATION_NAME)
+        self.graph.setWindowIcon(QtGui.QIcon(resource_path(constants.ICON_PATH)))
+        self.graph.show()
+        self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
+
     def finished_black(self):
         """Black finished/stopped. Perform the needed actions."""
+        if self.call_asd:
+            self.logger.info("Connecting with ASD...")
+            try:
+                self._initiate_asd_ctr(self.use_custom_itime)
+                self.initialize_graph()
+                self.asd_acquire()
+            except Exception as e:
+                self.show_error(str(e))
         self.body_tab.set_enabled_close_button(True)
         _close_logger(self.logger)
         self.log_handler.end_handler()
         self.start_button.setEnabled(True)
         self.body_tab.set_disabled_navbar(False)
         self.body_tab.set_disabled_navbar(False)
+        self.asd_checkbox.setDisabled(False)
+        self.asd_itime_checkbox.setDisabled(False)
+        self.graph.should_close = True
