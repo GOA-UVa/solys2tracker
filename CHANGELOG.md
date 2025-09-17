@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - BodyWidget was accessing its graph attribute even if no graph had been generated (not using ASD).
+- Fixed Adjust and Position configuration actions, where sometimes UI crashed after sending the values to the solys.
 
 ## [0.2.2] - 2025-05-22
 

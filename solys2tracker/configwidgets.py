@@ -636,7 +636,6 @@ class AdjustWidget(QtWidgets.QWidget):
         Worker that will obtain the adjustment from the Solys2
         """
 
-        finished = QtCore.Signal()
         success = QtCore.Signal(float, float)
         error = QtCore.Signal(str)
 
@@ -663,8 +662,6 @@ class AdjustWidget(QtWidgets.QWidget):
                 self.success.emit(az, ze)
             except Exception as e:
                 self.error.emit(str(e))
-            finally:
-                self.finished.emit()
 
     def update_adjustment_labels(self):
         self.th = QtCore.QThread()
@@ -672,18 +669,22 @@ class AdjustWidget(QtWidgets.QWidget):
         self.worker = AdjustWidget.AdjustWorker(cs.ip, cs.port, cs.password)
         self.worker.moveToThread(self.th)
         self.th.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.worker.error.connect(self.show_error)
         self.worker.success.connect(self._update_adjustment_labels)
-        self.worker.finished.connect(self.thread_finished)
+        self.worker.error.connect(self.show_error)
         self.th.finished.connect(self.th.deleteLater)
         self.thread_started()
         self.th.start()
 
     def _update_adjustment_labels(self, az: float, ze: float):
+        self._quit_thread()
         self.az_curr_adjustment.setText("{:+.4f}".format(az))
         self.ze_curr_adjustment.setText("{:+.4f}".format(ze))
+        self.thread_finished()
+
+    def _quit_thread(self):
+        self.th.quit()
+        self.worker.deleteLater()
+        self._old_th = self.th
 
     def thread_finished(self):
         self.az_extra_adjustment.setDisabled(False)
@@ -705,7 +706,6 @@ class AdjustWidget(QtWidgets.QWidget):
         """
 
         finished = QtCore.Signal()
-        success = QtCore.Signal()
         error = QtCore.Signal(str)
 
         def __init__(self, ip: str, port: int, password: str, az: float, ze: float):
@@ -743,34 +743,31 @@ class AdjustWidget(QtWidgets.QWidget):
                     ze -= zei
                 if ze != 0:
                     solys.adjust_zenith(ze)
-                self.success.emit()
+                self.finished.emit()
             except Exception as e:
                 self.error.emit(str(e))
-            finally:
-                self.finished.emit()
 
     def success_adjusting_solys2(self):
+        self._quit_thread()
+        self.thread_finished()
         self.show_success("Updated successfully")
         self.update_adjustment_labels()
 
     @QtCore.Slot()
     def adjust(self):
         self.empty_message_label()
-        self.th_send_adj = QtCore.QThread()
+        self.th = QtCore.QThread()
         cs = self.session_status
         az = self.az_extra_adjustment.value()
         ze = self.ze_extra_adjustment.value()
         self.worker = AdjustWidget.SendAdjustWorker(cs.ip, cs.port, cs.password, az, ze)
-        self.worker.moveToThread(self.th_send_adj)
-        self.th_send_adj.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th_send_adj.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
         self.worker.error.connect(self.show_error)
-        self.worker.success.connect(self.success_adjusting_solys2)
-        self.worker.finished.connect(self.thread_finished)
-        self.th_send_adj.finished.connect(self.th_send_adj.deleteLater)
+        self.worker.finished.connect(self.success_adjusting_solys2)
+        self.th.finished.connect(self.th.deleteLater)
         self.thread_started()
-        self.th_send_adj.start()
+        self.th.start()
 
     def empty_message_label(self):
         self.message_l.setText("")
@@ -779,10 +776,11 @@ class AdjustWidget(QtWidgets.QWidget):
         self.message_l.repaint()
 
     def show_error(self, msg: str):
-        msg = "Error: {}".format(msg)
+        self._quit_thread()
+        self.thread_finished()
         label_color = constants.COLOR_RED
-        self.message_l.setText(msg)
-        self.message_l.setStyleSheet("background-color: {}".format(label_color))
+        self.message_l.setText(f"Error: {msg}")
+        self.message_l.setStyleSheet(f"background-color: {label_color}")
         self.message_l.repaint()
 
     def show_success(self, msg: str):
@@ -886,7 +884,6 @@ class PositionWidget(QtWidgets.QWidget):
         Worker that will obtain the position from the Solys2
         """
 
-        finished = QtCore.Signal()
         success = QtCore.Signal(float, float)
         error = QtCore.Signal(str)
 
@@ -913,8 +910,6 @@ class PositionWidget(QtWidgets.QWidget):
                 self.success.emit(az, ze)
             except Exception as e:
                 self.error.emit(str(e))
-            finally:
-                self.finished.emit()
 
     def update_position_labels(self):
         self.th = QtCore.QThread()
@@ -922,22 +917,23 @@ class PositionWidget(QtWidgets.QWidget):
         self.worker = PositionWidget.PositionWorker(cs.ip, cs.port, cs.password)
         self.worker.moveToThread(self.th)
         self.th.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
         self.worker.error.connect(self.show_error)
         self.worker.success.connect(self._update_position_labels)
-        self.worker.finished.connect(self.thread_finished)
         self.th.finished.connect(self.th.deleteLater)
         self.thread_started()
         self.th.start()
 
     def _update_position_labels(self, az: float, ze: float):
+        self.thread_finished()
         self.az_curr_pos.setText(str(az))
         self.ze_curr_pos.setText(str(ze))
         self.az_sending_position.setValue(az)
         self.ze_sending_position.setValue(ze)
 
     def thread_finished(self):
+        self.th.quit()
+        self.worker.deleteLater()
+        self._old_th = self.th
         self.az_sending_position.setDisabled(False)
         self.ze_sending_position.setDisabled(False)
         self.save_button.setDisabled(False)
@@ -957,7 +953,6 @@ class PositionWidget(QtWidgets.QWidget):
         """
 
         finished = QtCore.Signal()
-        success = QtCore.Signal()
         error = QtCore.Signal(str)
 
         def __init__(self, ip: str, port: int, password: str, az: float, ze: float):
@@ -983,36 +978,32 @@ class PositionWidget(QtWidgets.QWidget):
                 solys = s2.Solys2(self.ip, self.port, self.password)
                 solys.set_azimuth(self.az)
                 solys.set_zenith(self.ze)
-                self.success.emit()
+                self.finished.emit()
             except Exception as e:
                 self.error.emit(str(e))
-            finally:
-                self.finished.emit()
 
     def success_sending_pos_solys2(self):
+        self.thread_finished()
         self.show_success("Order sent successfully")
         self.update_position_labels()
 
     @QtCore.Slot()
     def adjust(self):
         self.empty_message_label()
-        self.th_send_adj = QtCore.QThread()
+        self.th = QtCore.QThread()
         cs = self.session_status
         az = self.az_sending_position.value()
         ze = self.ze_sending_position.value()
         self.worker = PositionWidget.SendPositionWorker(
             cs.ip, cs.port, cs.password, az, ze
         )
-        self.worker.moveToThread(self.th_send_adj)
-        self.th_send_adj.started.connect(self.worker.run)
-        self.worker.finished.connect(self.th_send_adj.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.moveToThread(self.th)
+        self.th.started.connect(self.worker.run)
         self.worker.error.connect(self.show_error)
-        self.worker.success.connect(self.success_sending_pos_solys2)
-        self.worker.finished.connect(self.thread_finished)
-        self.th_send_adj.finished.connect(self.th_send_adj.deleteLater)
+        self.worker.finished.connect(self.success_sending_pos_solys2)
+        self.th.finished.connect(self.th.deleteLater)
         self.thread_started()
-        self.th_send_adj.start()
+        self.th.start()
 
     def empty_message_label(self):
         self.message_l.setText("")
@@ -1021,6 +1012,7 @@ class PositionWidget(QtWidgets.QWidget):
         self.message_l.repaint()
 
     def show_error(self, msg: str):
+        self.thread_finished()
         msg = "Error: {}".format(msg)
         label_color = constants.COLOR_RED
         self.message_l.setText(msg)
