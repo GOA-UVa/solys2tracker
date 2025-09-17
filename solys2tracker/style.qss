@@ -17,3 +17,12 @@
     font-weight: bold;
     color: red;
 }
+QPushButton[class=central] {
+    font-size: 35px;
+    font-weight: bold;
+}
+QPushButton[class=actionstart] {
+    font-size: 20px;
+    font-weight: bold;
+    min-height: 40px;
+}

@@ -39,8 +39,8 @@ def server_thread(conn: socket.socket):
                 ret = "TI 2022 93 15 15 15"
             elif cmd == "PO":
                 last_po_time = time.time()
-                vals = str(data)[2:-3].split()
-                if len(vals) == 1:
+                vals = str(data)[2:-1].split()[:-1]
+                if len(vals) <= 1:
                     ret = "PO {} {}".format(current_azimuth, current_zenith)
                 else:
                     if int(vals[1]) == 0:
@@ -50,12 +50,12 @@ def server_thread(conn: socket.socket):
                     ret = "PO"
             elif cmd == "CP":
                 current_po_time = time.time()
-                if last_po_time == None or last_po_time + DELAY <= current_po_time:
+                if last_po_time is None or last_po_time + DELAY <= current_po_time:
                     ret = "CP {} {}".format(current_azimuth+azimuth_adj, current_zenith+zenith_adj)
                 else:
                     ret = "CP {} {}".format(current_azimuth+azimuth_adj+1, current_zenith+zenith_adj+1)
             elif cmd == "AD":
-                vals = str(data)[2:-3].split()
+                vals = str(data)[2:-1].split()[:-1]
                 if len(vals) <= 1:
                     ret = "AD {} {}".format(azimuth_adj, zenith_adj)
                 else:
