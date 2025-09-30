@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # "## [unreleased] - yyyy-mm-dd"
 
+## [0.2.4] - 2025-09-30
+
+### Added
+- Connection panel now has a checkbox that allows the user to choose if they want to send a checksum after each Solys2
+  command, as it's specified in the guide, or not, as it fails in some newer models.
+
+### Changed
+- Using solys2==v0.2.7
+
 ## [0.2.3] - 2025-09-17
 
 ### Added
@@ -103,7 +112,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConnectASDWorker Tracker has logger that logs only to the logfile.
 
 
-[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.3...HEAD
+[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/javgat/solys2tracker/-/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/javgat/solys2tracker/-/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/javgat/solys2tracker/-/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/javgat/solys2tracker/-/compare/v0.2.0-beta.5...v0.2.1
