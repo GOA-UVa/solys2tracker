@@ -18,6 +18,7 @@ class SessionStatus:
     ip: str
     port: int
     password: str
+    add_checksum: bool
     is_connected: bool
     logfolder: str
     kernels_path: str
@@ -33,6 +34,8 @@ class SessionStatus:
             self.port = 15000
         if self.password is None:
             self.password = self._get_password_data()
+        if self.add_checksum is None:
+            self.add_checksum = False
         if self.is_connected is None:
             self.is_connected = False
         if self.logfolder is None:

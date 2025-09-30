@@ -34,7 +34,7 @@ __email__ = "gaton@goa.uva.es"
 __status__ = "Development"
 
 
-def _try_conn(ip: str, port: int, password: str) -> Tuple[bool, str]:
+def _try_conn(ip: str, port: int, password: str, add_checksum: bool) -> Tuple[bool, str]:
     """
     Tries to connect to the Solys2 through the given IP and Port using the given password.
 
@@ -46,6 +46,8 @@ def _try_conn(ip: str, port: int, password: str) -> Tuple[bool, str]:
         Solys2 port at which the connection will be done.
     password : str
         Password used for connecting to the Solys2.
+    add_checksum: bool
+        If True, add a checksum at the end of the commands sent. It may fail for newer models.
 
     Returns
     -------
@@ -55,7 +57,7 @@ def _try_conn(ip: str, port: int, password: str) -> Tuple[bool, str]:
         Error message in case it wasn't successful, success message in case it was.
     """
     try:
-        solys = s2.Solys2(ip, port, password)
+        solys = s2.Solys2(ip, port, password, add_checksum)
         solys.close()
     except Exception as e:
         return False, str(e)
@@ -245,6 +247,16 @@ class ConnectionWidget(QtWidgets.QWidget):
         add_spacer(self.lay_pass, self.h_spacers)
         self.lay_pass.addWidget(self.pass_input)
         add_spacer(self.lay_pass, self.h_spacers)
+        # Forth row (Extra connection config)
+        self.lay_extras = QtWidgets.QHBoxLayout()
+        self.add_checksum_label = QtWidgets.QLabel("Add Checksums):", alignment=QtCore.Qt.AlignCenter)
+        self.add_checksum_label.setToolTip("Needed for older models, but may fail with new ones.")
+        self.add_checksum_checkbox = QtWidgets.QCheckBox()
+        add_spacer(self.lay_extras, self.h_spacers)
+        self.lay_extras.addWidget(self.add_checksum_label)
+        add_spacer(self.lay_extras, self.h_spacers)
+        self.lay_extras.addWidget(self.add_checksum_checkbox)
+        add_spacer(self.lay_extras, self.h_spacers)
         # Finish input
         add_spacer(self.input_layout, self.v_spacers)
         self.input_layout.addLayout(self.lay_ip)
@@ -252,6 +264,8 @@ class ConnectionWidget(QtWidgets.QWidget):
         self.input_layout.addLayout(self.lay_port)
         add_spacer(self.input_layout, self.v_spacers)
         self.input_layout.addLayout(self.lay_pass)
+        add_spacer(self.input_layout, self.v_spacers)
+        self.input_layout.addLayout(self.lay_extras)
         add_spacer(self.input_layout, self.v_spacers)
         # Message
         self.message_l = QtWidgets.QLabel("", alignment=QtCore.Qt.AlignCenter)
@@ -284,7 +298,7 @@ class ConnectionWidget(QtWidgets.QWidget):
 
         finished = QtCore.Signal(bool, str)
 
-        def __init__(self, ip: str, port: int, password: str):
+        def __init__(self, ip: str, port: int, password: str, add_checksum: bool):
             """
             Parameters
             ----------
@@ -299,9 +313,10 @@ class ConnectionWidget(QtWidgets.QWidget):
             self.ip = ip
             self.port = port
             self.password = password
+            self.add_checksum = add_checksum
 
         def run(self):
-            is_connected, msg = _try_conn(self.ip, self.port, self.password)
+            is_connected, msg = _try_conn(self.ip, self.port, self.password, self.add_checksum)
             self.finished.emit(is_connected, msg)
 
     @QtCore.Slot()
@@ -313,12 +328,14 @@ class ConnectionWidget(QtWidgets.QWidget):
         ip = self.ip_input.text()
         port = self.port_input.value()
         password = self.pass_input.text()
+        add_checksum = self.add_checksum_checkbox.isChecked()
         self.session_status.ip = ip
         self.session_status.port = port
         self.session_status.password = password
+        self.session_status.add_checksum = add_checksum
 
         self.th = QtCore.QThread()
-        self.worker = ConnectionWidget.TryConnectionWorker(ip, port, password)
+        self.worker = ConnectionWidget.TryConnectionWorker(ip, port, password, add_checksum)
         self.worker.moveToThread(self.th)
         self.th.started.connect(self.worker.run)
         self.worker.finished.connect(self.th.quit)
