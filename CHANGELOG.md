@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   command, as it's specified in the guide, or not, as it fails in some newer models.
 
 ### Changed
-- Using solys2==v0.2.7
+- Using solys2==v0.2.8
 
 ## [0.2.3] - 2025-09-17
 
