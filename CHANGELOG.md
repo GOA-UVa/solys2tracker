@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # "## [unreleased] - yyyy-mm-dd"
 
-## [unreleased] - yyyy-mm-dd
+## [0.2.5] - 2025-10-01
 
 ### Changed
 - Using solys2==v0.2.9
@@ -121,7 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConnectASDWorker Tracker has logger that logs only to the logfile.
 
 
-[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.4...HEAD
+[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/javgat/solys2tracker/-/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/javgat/solys2tracker/-/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/javgat/solys2tracker/-/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/javgat/solys2tracker/-/compare/v0.2.1...v0.2.2
