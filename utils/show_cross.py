@@ -58,7 +58,7 @@ def main():
     for i, (ax, ms, minarr) in enumerate(zip(axis, mss, minarrs)):
         lms = len(ms)
         step = 2*(max_d - min_d)/(lms-2)
-        x = np.arange(min_d, max_d+step, step)
+        x = np.arange(min_d, max_d+step/2, step)
         mid = int(lms/2)
         if do_norm:
             norm0, norm1 = normalize_both(ms[:mid], ms[mid:], minarr=minarr)

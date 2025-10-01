@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # "## [unreleased] - yyyy-mm-dd"
 
+## [unreleased] - yyyy-mm-dd
+
+### Changed
+- Using solys2==v0.2.9
+
+### Fixed
+- Show mesh and cross now correctly using `np.arange` to define the ranges. An extra value was sometimes being added
+  due to float handling. It also happened in the operations of `solys2==v0.2.8`.
+
 ## [0.2.4] - 2025-09-30
 
 ### Added
