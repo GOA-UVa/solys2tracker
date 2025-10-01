@@ -37,7 +37,7 @@ def main():
         min_d = -min_max
         max_d = min_max
         step = (max_d - min_d)/(lms-1)
-        x = np.arange(min_d, max_d+step, step)
+        x = np.arange(min_d, max_d+step/2, step)
         ax.set_title(f'Detector {i+1}')
         im = ax.imshow(ms, origin='lower', cmap='bone', interpolation="none")
         x = np.array([f'{xi:.1f}' for xi in x])
