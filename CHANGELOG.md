@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # "## [unreleased] - yyyy-mm-dd"
 
+## [unreleased] - yyyy-mm-dd
+
+### Fixed
+- Mesh and cross steps visual feedback now correctly use `np.arange` too. The number of steps actually used was correct,
+  as it was fixed in last `solys2` release, but the visual feedback wasn't. It sometimes said that it was supposed to perform
+  two more measurements than it actually had to (and did) perform.
+
 ## [0.2.5] - 2025-10-01
 
 ### Changed

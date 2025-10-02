@@ -859,12 +859,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
             offsets: List[Tuple[float, float]] = []
             for i in np.arange(
                 cp.azimuth_min_offset,
-                cp.azimuth_max_offset + cp.azimuth_step,
+                cp.azimuth_max_offset + cp.azimuth_step/2,
                 cp.azimuth_step,
             ):
                 for j in np.arange(
                     cp.zenith_min_offset,
-                    cp.zenith_max_offset + cp.zenith_step,
+                    cp.zenith_max_offset + cp.zenith_step/2,
                     cp.zenith_step,
                 ):
                     offsets.append((i, j))
@@ -873,7 +873,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 (i, 0)
                 for i in np.arange(
                     cp.azimuth_min_offset,
-                    cp.azimuth_max_offset + cp.azimuth_step,
+                    cp.azimuth_max_offset + cp.azimuth_step/2,
                     cp.azimuth_step,
                 )
             ]
@@ -881,7 +881,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 (0, i)
                 for i in np.arange(
                     cp.zenith_min_offset,
-                    cp.zenith_max_offset + cp.zenith_step,
+                    cp.zenith_max_offset + cp.zenith_step/2,
                     cp.zenith_step,
                 )
             ]
