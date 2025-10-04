@@ -118,6 +118,13 @@ class MplCanvas(FigureCanvas):
         self.axes: Axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
 
+    def resizeEvent(self, event):
+        result = super().resizeEvent(event)
+        fig = self.axes.get_figure()
+        if fig:
+            fig.tight_layout()
+        return result
+
 class GraphWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
