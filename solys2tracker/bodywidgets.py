@@ -859,12 +859,12 @@ class BodyCrossWidget(QtWidgets.QWidget):
             offsets: List[Tuple[float, float]] = []
             for i in np.arange(
                 cp.azimuth_min_offset,
-                cp.azimuth_max_offset + cp.azimuth_step,
+                cp.azimuth_max_offset + cp.azimuth_step/2,
                 cp.azimuth_step,
             ):
                 for j in np.arange(
                     cp.zenith_min_offset,
-                    cp.zenith_max_offset + cp.zenith_step,
+                    cp.zenith_max_offset + cp.zenith_step/2,
                     cp.zenith_step,
                 ):
                     offsets.append((i, j))
@@ -873,7 +873,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 (i, 0)
                 for i in np.arange(
                     cp.azimuth_min_offset,
-                    cp.azimuth_max_offset + cp.azimuth_step,
+                    cp.azimuth_max_offset + cp.azimuth_step/2,
                     cp.azimuth_step,
                 )
             ]
@@ -881,7 +881,7 @@ class BodyCrossWidget(QtWidgets.QWidget):
                 (0, i)
                 for i in np.arange(
                     cp.zenith_min_offset,
-                    cp.zenith_max_offset + cp.zenith_step,
+                    cp.zenith_max_offset + cp.zenith_step/2,
                     cp.zenith_step,
                 )
             ]
@@ -1394,7 +1394,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.graph.setWindowTitle(constants.APPLICATION_NAME)
         self.graph.setWindowIcon(QtGui.QIcon(resource_path(constants.ICON_PATH)))
         self.graph.show()
-        self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
+        self.graph.update_labels("ASD Spectrum", "Wavelengths (nm)", "Digital counts")
 
     def finished_black(self):
         """Black finished/stopped. Perform the needed actions."""

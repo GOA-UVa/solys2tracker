@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # "## [unreleased] - yyyy-mm-dd"
 
+## [0.2.6] - 2025-10-04
+
+### Fixed
+- Mesh and cross steps visual feedback now correctly use `np.arange` too. The number of steps actually used was correct,
+  as it was fixed in last `solys2` release, but the visual feedback wasn't. It sometimes said that it was supposed to perform
+  two more measurements than it actually had to (and did) perform.
+
+### Changed
+- Improved ASD plot graph:
+  - Header takes less space, as it's in only one row
+  - The plot stretches vertically, and the layout tightens when its needed.
+
 ## [0.2.5] - 2025-10-01
 
 ### Changed
@@ -121,7 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConnectASDWorker Tracker has logger that logs only to the logfile.
 
 
-[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.5...HEAD
+[unreleased]: https://github.com/javgat/solys2tracker/-/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/javgat/solys2tracker/-/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/javgat/solys2tracker/-/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/javgat/solys2tracker/-/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/javgat/solys2tracker/-/compare/v0.2.2...v0.2.3
