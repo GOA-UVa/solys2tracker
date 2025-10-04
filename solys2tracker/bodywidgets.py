@@ -1394,7 +1394,7 @@ class BodyBlackWidget(QtWidgets.QWidget):
         self.graph.setWindowTitle(constants.APPLICATION_NAME)
         self.graph.setWindowIcon(QtGui.QIcon(resource_path(constants.ICON_PATH)))
         self.graph.show()
-        self.graph.update_labels("Spectrum", "Wavelengths (nm)", "Digital counts")
+        self.graph.update_labels("ASD Spectrum", "Wavelengths (nm)", "Digital counts")
 
     def finished_black(self):
         """Black finished/stopped. Perform the needed actions."""
