@@ -149,6 +149,9 @@ class GraphWidget(QtWidgets.QWidget):
         self.canvas.axes.set_ylabel(self.ylabel)
         self.canvas.axes.grid(True)
         self.canvas.draw()
+        fig = self.canvas.axes.get_figure()
+        if fig:
+            fig.tight_layout()
 
 class CaptureDataWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -160,7 +163,7 @@ class CaptureDataWidget(QtWidgets.QWidget):
         self.h_spacers = []
         self.main_layout = QtWidgets.QVBoxLayout(self)
         # Headers
-        self.headers_layout = QtWidgets.QFormLayout()
+        self.headers_layout = QtWidgets.QHBoxLayout()
         self.label_itime = QtWidgets.QLabel("Integration time:")
         self.label_drift = QtWidgets.QLabel("VNIR Drift:")
         self.label_gain1 = QtWidgets.QLabel("Swir1 gain:")
@@ -169,17 +172,33 @@ class CaptureDataWidget(QtWidgets.QWidget):
         self.label_v_drift = QtWidgets.QLabel("")
         self.label_v_gain1 = QtWidgets.QLabel("")
         self.label_v_gain2 = QtWidgets.QLabel("")
-        self.headers_layout.addRow(self.label_itime, self.label_v_itime)
-        self.headers_layout.addRow(self.label_drift, self.label_v_drift)
-        self.headers_layout.addRow(self.label_gain1, self.label_v_gain1)
-        self.headers_layout.addRow(self.label_gain2, self.label_v_gain2)
+        self.sep_labels = [QtWidgets.QLabel(" | ") for _ in range(3)]
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.label_itime)
+        self.headers_layout.addWidget(self.label_v_itime)
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.sep_labels[0], 1)
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.label_drift)
+        self.headers_layout.addWidget(self.label_v_drift)
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.sep_labels[0], 1)
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.label_gain1)
+        self.headers_layout.addWidget(self.label_v_gain1)
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.sep_labels[0], 1)
+        add_spacer(self.headers_layout, self.h_spacers)
+        self.headers_layout.addWidget(self.label_gain2)
+        self.headers_layout.addWidget(self.label_v_gain2)
+        add_spacer(self.headers_layout, self.h_spacers)
         # Graph
         self.graph = GraphWidget()
         # Finish main layout
         add_spacer(self.main_layout, self.v_spacers)
         self.main_layout.addLayout(self.headers_layout)
         add_spacer(self.main_layout, self.v_spacers)
-        self.main_layout.addWidget(self.graph)
+        self.main_layout.addWidget(self.graph, 1)
         add_spacer(self.main_layout, self.v_spacers)
 
     def update_plot(self, x_data: list, y_data: list):

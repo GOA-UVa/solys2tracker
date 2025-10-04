@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as it was fixed in last `solys2` release, but the visual feedback wasn't. It sometimes said that it was supposed to perform
   two more measurements than it actually had to (and did) perform.
 
+### Changed
+- Improved ASD plot graph. Header takes less space, as it's in only one row, and the plot stretches vertically.
+
 ## [0.2.5] - 2025-10-01
 
 ### Changed
